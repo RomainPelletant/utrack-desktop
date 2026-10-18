@@ -1,0 +1,85 @@
+name: Vulnerability scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # tous les lundis à 6h UTC
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+
+permissions:
+  contents: read
+
+env:
+  # Keep in sync with ci.yml and release.yml.
+  FLUTTER_VERSION: 3.47.7
+
+jobs:
+
+  # ── SBOM (same steps as release.yml) ─────────────────────────────────────────
+  sbom:
+    name: SBOM (CycloneDX)
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    container: debian:testing
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -q
+          apt-get install -y --no-install-recommends \
+            git curl unzip xz-utils ca-certificates python3 pkg-config \
+            libgtk-3-dev libsecret-1-dev libepoxy-dev \
+            libwpe-1.0-dev libwpewebkit-2.0-dev libwpebackend-fdo-1.0-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        run: |
+          git clone --depth 1 --branch "$FLUTTER_VERSION" \
+            https://github.com/flutter/flutter.git /opt/flutter
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Generate SBOM
+        run: |
+          flutter config --no-analytics
+          flutter pub get
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python3 scripts/sbom.py -o sbom.cdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
+
+  # ── Grype → GitHub code scanning ─────────────────────────────────────────────
+  scan:
+    needs: sbom
+    name: Scan SBOM (Grype)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+
+      - name: Scan CycloneDX SBOM
+        id: grype
+        uses: anchore/scan-action@v7
+        with:
+          sbom: sbom.cdx.json
+          fail-build: false
+          output-format: sarif
+
+      - name: Upload vulnerabilities
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+          category: grype-sbom

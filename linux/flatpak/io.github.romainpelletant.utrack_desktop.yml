@@ -1,0 +1,157 @@
+# Flatpak of UTD: runs on any distribution, including those without WPE
+# WebKit >= 2.50 (Ubuntu 22.04+, Debian 13, Mint…). WPE WebKit, needed by
+# flutter_inappwebview_linux, is not in the GNOME runtime and is built here.
+#
+# Built by `scripts/release.sh flatpak`. The first build compiles WebKit
+# (1–2 h); flatpak-builder then reuses it until its module changes.
+app-id: io.github.romainpelletant.utrack_desktop   # linux/CMakeLists.txt APPLICATION_ID
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm22
+command: utd
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Desktop notifications (flutter_local_notifications).
+  - --talk-name=org.freedesktop.Notifications
+  # YouTrack tokens (flutter_secure_storage → libsecret), when the Secret
+  # portal is not available.
+  - --talk-name=org.freedesktop.secrets
+  # Same as the macOS entitlement: files downloaded from YouTrack.
+  - --filesystem=xdg-download
+
+build-options:
+  # Skia (WebKit) recommends clang; `flutter build linux` requires it.
+  append-path: /usr/lib/sdk/llvm22/bin
+  prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
+  # A debug build of WebKit takes several GB of disk and memory.
+  no-debuginfo: true
+  strip: true
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /lib/cmake
+  - /share/pkgconfig
+  - /share/doc
+  - /share/man
+  - '*.a'
+  - '*.la'
+
+modules:
+  # Build tools and libraries for WPE WebKit (see Build-Depends of the
+  # Debian wpewebkit package) that the GNOME SDK does not ship.
+  - name: unifdef
+    buildsystem: simple
+    build-options:
+      # unifdef 2.12 names a variable `constexpr`, a keyword in C23 (the GCC
+      # 15 default).
+      cflags: -std=gnu17
+    build-commands:
+      - make prefix=/app install
+    cleanup: ['*']
+    sources:
+      # dotat.at often stalls from GitHub runners; Debian ships the same file.
+      - type: archive
+        url: https://deb.debian.org/debian/pool/main/u/unifdef/unifdef_2.12.orig.tar.gz
+        mirror-urls:
+          - https://dotat.at/prog/unifdef/unifdef-2.12.tar.gz
+        sha256: fba564a24db7b97ebe9329713ac970627b902e5e9e8b14e19e024eb6e278d10b
+
+  # Libraries go to /app/lib, where pkg-config and the dynamic loader look:
+  # without an explicit libdir, CMake picks lib64 in this SDK.
+  - name: libwpe
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+    post-install:
+      - test -f /app/include/wpe-1.0/wpe/wpe.h
+      - test -e /app/lib/libwpe-1.0.so
+    sources:
+      - type: archive
+        url: https://wpewebkit.org/releases/libwpe-1.16.3.tar.xz
+        sha256: c880fa8d607b2aa6eadde7d6d6302b1396ebc38368fe2332fa20e193c7ee1420
+
+  # Same version as Debian testing, which the .deb is built against.
+  - name: wpewebkit
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DPORT=WPE
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
+      - -DCMAKE_INSTALL_LIBDIR=lib
+      # libwpe built above.
+      - -DWPE_INCLUDE_DIR=/app/include/wpe-1.0
+      - -DWPE_LIBRARY=/app/lib/libwpe-1.0.so
+      # The plugin renders offscreen with the WPEPlatform headless display;
+      # the DRM and Wayland platforms are not used.
+      - -DENABLE_WPE_PLATFORM_HEADLESS=ON
+      - -DENABLE_WPE_PLATFORM_DRM=OFF
+      - -DENABLE_WPE_PLATFORM_WAYLAND=OFF
+      - -DENABLE_WPE_QT_API=OFF
+      # Not possible inside the Flatpak sandbox.
+      - -DENABLE_BUBBLEWRAP_SANDBOX=OFF
+      - -DENABLE_DOCUMENTATION=OFF
+      - -DENABLE_INTROSPECTION=OFF
+      - -DENABLE_MINIBROWSER=OFF
+      - -DENABLE_API_TESTS=OFF
+      - -DENABLE_WEBDRIVER=OFF
+      # Features whose libraries are not in the GNOME runtime.
+      - -DENABLE_GAMEPAD=OFF
+      - -DENABLE_JOURNALD_LOG=OFF
+      - -DENABLE_SPEECH_SYNTHESIS=OFF
+      - -DUSE_AVIF=OFF
+      - -DUSE_JPEGXL=OFF
+      - -DUSE_LIBBACKTRACE=OFF
+      - -DUSE_LIBHYPHEN=OFF
+      - -DUSE_SYSPROF_CAPTURE=OFF
+    # What flutter_inappwebview_linux looks for with pkg-config.
+    post-install:
+      - test -f /app/lib/pkgconfig/wpe-webkit-2.0.pc
+      - test -f /app/lib/pkgconfig/wpe-platform-2.0.pc
+      - test -f /app/lib/pkgconfig/wpe-platform-headless-2.0.pc
+    sources:
+      - type: archive
+        url: https://wpewebkit.org/releases/wpewebkit-2.54.1.tar.xz
+        sha256: 0de8bdfba011f9cd63ba9a9171fa6038dd2c08237894f4082abbb821f29d3fe9
+
+  - name: utd
+    buildsystem: simple
+    build-options:
+      # flutter pub get and the Flutter engine artifacts are downloaded.
+      build-args:
+        - --share=network
+      env:
+        # Keep in sync with release.yml (checked by scripts/release.sh).
+        FLUTTER_VERSION: 3.47.7
+    build-commands:
+      - git clone --depth 1 --branch "$FLUTTER_VERSION"
+        https://github.com/flutter/flutter.git .flutter-sdk
+      - |
+        export HOME="$PWD/.home" PUB_CACHE="$PWD/.pub-cache"
+        export PATH="$PWD/.flutter-sdk/bin:$PATH"
+        flutter config --no-analytics --enable-linux-desktop
+        flutter build linux --release
+      - mkdir -p /app/utd /app/bin
+      - cp -R build/linux/*/release/bundle/. /app/utd/
+      - ln -s /app/utd/utd /app/bin/utd
+      - install -Dm644 linux/flatpak/io.github.romainpelletant.utrack_desktop.desktop
+        /app/share/applications/io.github.romainpelletant.utrack_desktop.desktop
+      - install -Dm644 linux/flatpak/io.github.romainpelletant.utrack_desktop.png
+        /app/share/icons/hicolor/512x512/apps/io.github.romainpelletant.utrack_desktop.png
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .flatpak-builder
+          - .dart_tool
+          - .git
+          - build
+          - release

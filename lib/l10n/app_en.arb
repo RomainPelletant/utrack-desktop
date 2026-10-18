@@ -1,0 +1,71 @@
+{
+  "@@locale": "en",
+  "serverTitle": "YouTrack server",
+  "serverPrompt": "Enter the address of your YouTrack instance.",
+  "serverUrlLabel": "Server address",
+  "connect": "Connect",
+  "cancel": "Cancel",
+  "invalidUrl": "Invalid address",
+  "serverUnreachable": "Unable to reach the server",
+  "retry": "Retry",
+  "changeServer": "Change server",
+  "legalese": "Distributed under the Apache License 2.0.\n\nYouTrack is a trademark of JetBrains s.r.o. UTD is an independent project, not affiliated with or endorsed by JetBrains.",
+  "notificationsTitle": "Desktop notifications",
+  "notificationsIntro": "UTD checks your YouTrack notification center every minute and shows new notifications on your desktop. This requires a permanent token. Leave the field empty to turn notifications off.",
+  "tokenLabel": "Permanent token",
+  "tokenHelp": "In YouTrack: Profile › Account Security › New token, with the YouTrack scope.",
+  "openTokenPage": "Create a token",
+  "save": "Save",
+  "tokenInvalid": "The server rejected this token.",
+  "notificationsEnabled": "Notifications enabled for {name}.",
+  "@notificationsEnabled": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsDisabled": "Notifications turned off.",
+  "updatedBy": "Updated by {author}",
+  "@updatedBy": {
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "newActivity": "New activity",
+  "statusChecking": "Checking…",
+  "statusOk": "Last check at {time}. Unread notifications: {count}.",
+  "@statusOk": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "statusKeychainError": "The saved token could not be read from the system keychain. Enter it again and save.",
+  "statusError": "Last check failed: {error}",
+  "@statusError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "statusPermissionDenied": "The system blocks notifications from UTD. Allow them in the system settings.",
+  "openSystemSettings": "Open system settings",
+  "menuChangeServer": "Change Server…",
+  "menuNotifications": "Notifications…",
+  "menuAbout": "About {app}",
+  "@menuAbout": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  }
+}

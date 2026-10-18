@@ -1,0 +1,147 @@
+name: App Store Connect
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Git ref to build (branch, tag, or commit SHA)
+        required: false
+        default: master
+      wait_for_processing:
+        description: Wait for App Store Connect processing
+        required: false
+        default: true
+        type: boolean
+  push:
+    tags:
+      - 'appstore-v*'
+
+jobs:
+  upload-macos-app-store:
+    name: Build and Upload macOS App Store Binary
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    env:
+      FLUTTER_VERSION: stable
+      APP_STORE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_APPLE_ID: ${{ secrets.APP_STORE_CONNECT_APPLE_ID }}
+      WAIT_FOR_PROCESSING: ${{ github.event_name == 'workflow_dispatch' && inputs.wait_for_processing || 'true' }}
+      APP_BUNDLE_ID: com.mac7z.app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref || github.ref }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Download 7zz binary
+        run: bash scripts/setup.sh
+
+      - name: Prepare App Store Connect key
+        env:
+          APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+        run: |
+          test -n "$APP_STORE_CONNECT_API_KEY"
+          test -n "$APP_STORE_CONNECT_ISSUER_ID"
+          test -n "$APP_STORE_CONNECT_KEY_P8"
+          printf '%s' "$APP_STORE_CONNECT_KEY_P8" > "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY}.p8"
+
+      - name: Create export options plist
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>destination</key>
+            <string>export</string>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>manageAppVersionAndBuildNumber</key>
+            <false/>
+            <key>signingCertificate</key>
+            <string>Mac App Distribution</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>teamID</key>
+            <string>${APP_STORE_TEAM_ID}</string>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Archive macOS app for App Store
+        run: |
+          xcodebuild \
+            -workspace macos/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            -archivePath "$RUNNER_TEMP/mac7z.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY}.p8" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$APP_STORE_TEAM_ID" \
+            archive
+
+      - name: Export signed package
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath "$RUNNER_TEMP/mac7z.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY}.p8" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+
+      - name: Locate exported package
+        id: package
+        run: |
+          PKG_PATH="$(find "$RUNNER_TEMP/export" -name '*.pkg' -type f | head -n 1)"
+          test -n "$PKG_PATH"
+          echo "pkg_path=$PKG_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Read app version
+        id: version
+        run: |
+          VERSION_LINE="$(grep '^version:' pubspec.yaml | awk '{print $2}')"
+          echo "short_version=${VERSION_LINE%%+*}" >> "$GITHUB_OUTPUT"
+          echo "bundle_version=${VERSION_LINE##*+}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package to App Store Connect
+        env:
+          APP_STORE_CONNECT_P8_FILE: ${{ runner.temp }}/AuthKey_${{ env.APP_STORE_CONNECT_API_KEY }}.p8
+          APP_BUNDLE_VERSION: ${{ steps.version.outputs.bundle_version }}
+          APP_SHORT_VERSION: ${{ steps.version.outputs.short_version }}
+        run: |
+          if [ "$WAIT_FOR_PROCESSING" = "true" ]; then
+            ./scripts/upload_app_store.sh "${{ steps.package.outputs.pkg_path }}" --wait
+          else
+            ./scripts/upload_app_store.sh "${{ steps.package.outputs.pkg_path }}"
+          fi
+
+      - name: Upload exported pkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-store-connect-pkg
+          path: ${{ steps.package.outputs.pkg_path }}
+          if-no-files-found: error

@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in sync with release.yml. 3.47+ is required with Xcode 27 (lipo).
+  FLUTTER_VERSION: 3.47.7
+
+jobs:
+
+  lint:
+    name: Lint & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Translations are up to date
+        run: |
+          python3 tool/l10n.py
+          flutter gen-l10n
+          git diff --exit-code -- lib/l10n macos/Runner '*.lproj' \
+            || { echo "::error::Run 'python3 tool/l10n.py' and commit the result."; exit 1; }
+
+      - name: Dart format check
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Flutter test
+        run: flutter test
+
+      - name: Shell scripts
+        run: shellcheck scripts/*.sh
+
+  build-macos:
+    needs: lint
+    name: Build macOS (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Build and package (ad-hoc signature)
+        run: scripts/release.sh macos
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UTD-macos
+          path: release/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  build-linux:
+    needs: lint
+    name: Build Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    # WPE WebKit >= 2.50 (flutter_inappwebview_linux) is not packaged on
+    # Ubuntu runners; Debian testing ships it.
+    container: debian:testing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update -q
+          apt-get install -y --no-install-recommends \
+            git curl unzip xz-utils zip ca-certificates \
+            clang lld llvm cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libsecret-1-dev libepoxy-dev \
+            libwpe-1.0-dev libwpewebkit-2.0-dev libwpebackend-fdo-1.0-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        run: |
+          git clone --depth 1 --branch "$FLUTTER_VERSION" \
+            https://github.com/flutter/flutter.git /opt/flutter
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Flutter precache & config
+        run: |
+          flutter config --no-analytics --enable-linux-desktop
+          flutter precache --linux
+
+      - name: Build and package
+        run: scripts/release.sh linux
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UTD-linux-${{ matrix.arch }}
+          path: |
+            release/*.tar.gz
+            release/*.deb
+          if-no-files-found: error
+          retention-days: 7
+
+  build-windows:
+    needs: lint
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Build and package
+        run: scripts/release.sh windows
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UTD-windows-x64
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 7

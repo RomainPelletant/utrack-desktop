@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=UTD
+GenericName=YouTrack client
+Comment=Desktop client for YouTrack
+Exec=utd
+Icon=io.github.romainpelletant.utrack_desktop
+StartupWMClass=io.github.romainpelletant.utrack_desktop
+Terminal=false
+Categories=Development;ProjectManagement;

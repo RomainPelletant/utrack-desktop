@@ -1,0 +1,364 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+env:
+  # Keep in sync with ci.yml. 3.47+ is required with Xcode 27 (lipo).
+  FLUTTER_VERSION: 3.47.7
+
+jobs:
+
+  # ── Checks + release notes from CHANGELOG.md ─────────────────────────────────
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches pubspec.yaml
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PUBSPEC_VERSION="$(scripts/release.sh version)"
+          # A pre-release tag (v1.2.0-beta.1) must start with the pubspec version.
+          if [ "${VERSION%%-*}" != "$PUBSPEC_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pubspec.yaml version $PUBSPEC_VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          {
+            scripts/release.sh notes "$VERSION"
+            cat <<EOF
+
+          ---
+
+          ### Downloads
+
+          | System | File |
+          |---|---|
+          | macOS 12+ (Apple Silicon and Intel) | \`UTD-${VERSION}-macos.dmg\` |
+          | Windows 10/11 (x64) | \`UTD-${VERSION}-windows-x64-setup.exe\` · \`UTD-${VERSION}-windows-x64.zip\` |
+          | Linux x86_64 | \`UTD-${VERSION}-linux-amd64.flatpak\` · \`utrack-desktop_${VERSION}_amd64.deb\` · \`UTD-${VERSION}-linux-amd64.tar.gz\` |
+          | Linux ARM64 | \`UTD-${VERSION}-linux-arm64.flatpak\` · \`utrack-desktop_${VERSION}_arm64.deb\` · \`UTD-${VERSION}-linux-arm64.tar.gz\` |
+
+          On Linux, the \`.flatpak\` works on any distribution (Ubuntu, Mint, Fedora, Debian…):
+          \`flatpak install --user UTD-${VERSION}-linux-amd64.flatpak\`.
+          The \`.deb\` and \`.tar.gz\` require WPE WebKit 2.50 or later (e.g. Debian testing).
+          EOF
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  # ── macOS → signed & notarized universal .dmg ───────────────────────────────
+  build-macos:
+    needs: prepare
+    name: Build macOS (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Import signing certificate
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > certificate.p12
+
+          security create-keychain -p temp123 build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp123 build.keychain
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k temp123 build.keychain
+
+      - name: Build macOS release
+        run: flutter build macos --release
+
+      - name: Code sign UTD.app
+        env:
+          APPLE_SIGN_ID_APP: ${{ secrets.APPLE_SIGN_ID_APP }}
+          APP_PATH: "build/macos/Build/Products/Release/UTD.app"
+        run: |  
+            codesign --force --deep --options runtime --timestamp \
+              --sign "$APPLE_SIGN_ID_APP" \
+              "$APP_PATH"
+
+            if codesign --verify --deep --strict --verbose=4 "$APP_PATH"; then
+              echo "Signature valid"
+            else
+              echo "Signature failed"
+              exit 1
+            fi
+
+      - name: Create DMG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG_STAGING="/tmp/UTD_dmg_staging"
+          mkdir -p "$DMG_STAGING"
+          cp -R "build/macos/Build/Products/Release/UTD.app" "$DMG_STAGING/"
+          ln -s /Applications "$DMG_STAGING/Applications"
+          hdiutil create \
+            -volname "UTD" \
+            -srcfolder "$DMG_STAGING" \
+            -ov -format UDZO -fs HFS+ \
+            "UTD-${VERSION}.dmg"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ACCOUNT_ID: ${{ secrets.APPLE_ACCOUNT_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG_FILE="UTD-${VERSION}.dmg"
+
+          xcrun notarytool submit "$DMG_FILE" \
+            --apple-id "$APPLE_ACCOUNT_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: UTD-*.dmg
+          if-no-files-found: error
+
+  # ── Linux → .tar.gz + .deb (amd64 + arm64) ───────────────────────────────────
+  build-linux:
+    needs: prepare
+    name: Build Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    # WPE WebKit >= 2.50 (flutter_inappwebview_linux) is not packaged on
+    # Ubuntu runners; Debian testing ships it.
+    container: debian:testing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update -q
+          apt-get install -y --no-install-recommends \
+            git curl unzip xz-utils zip ca-certificates \
+            clang lld llvm cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libsecret-1-dev libepoxy-dev \
+            libwpe-1.0-dev libwpewebkit-2.0-dev libwpebackend-fdo-1.0-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        run: |
+          git clone --depth 1 --branch "$FLUTTER_VERSION" \
+            https://github.com/flutter/flutter.git /opt/flutter
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Flutter precache & config
+        run: |
+          flutter config --no-analytics --enable-linux-desktop
+          flutter precache --linux
+
+      - name: Build and package
+        run: scripts/release.sh linux
+
+      - name: Upload Linux packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: |
+            release/*.tar.gz
+            release/*.deb
+          if-no-files-found: error
+
+  # ── Linux → .flatpak (amd64 + arm64), WPE WebKit included ───────────────────
+  build-flatpak:
+    needs: prepare
+    name: Build Flatpak (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    # The first build compiles WPE WebKit (1–2 h).
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Install flatpak-builder
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
+          # Ubuntu 24.04 blocks the user namespaces bubblewrap needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: actions/checkout@v4
+
+      # Caches are scoped to the tag: this reuses WPE WebKit when a release
+      # job is re-run.
+      - name: Cache flatpak-builder
+        uses: actions/cache@v4
+        with:
+          path: .flatpak-builder
+          key: flatpak-${{ matrix.arch }}-${{ hashFiles('linux/flatpak/*.yml') }}-${{ github.sha }}
+          restore-keys: flatpak-${{ matrix.arch }}-${{ hashFiles('linux/flatpak/*.yml') }}-
+
+      - name: Build and package
+        run: scripts/release.sh flatpak
+
+      - name: Upload Flatpak
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-${{ matrix.arch }}
+          path: release/*.flatpak
+          if-no-files-found: error
+
+  # ── Windows → portable .zip ──────────────────────────────────────────────────
+  build-windows:
+    needs: prepare
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build and package
+        run: scripts/release.sh windows
+
+      - name: Upload zip and installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            release/*.zip
+            release/*.exe
+          if-no-files-found: error
+
+  # ── SBOM ─────────────────────────────────────────────────────────────────────
+  sbom:
+    needs: prepare
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    # Same image as the Linux build, so the SBOM records the exact versions of
+    # the Linux system libraries (pkg-config). macOS and Windows native
+    # dependencies come from Package.resolved and the plugins' CMake files.
+    container: debian:testing
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -q
+          apt-get install -y --no-install-recommends \
+            git curl unzip xz-utils ca-certificates python3 pkg-config \
+            libgtk-3-dev libsecret-1-dev libepoxy-dev \
+            libwpe-1.0-dev libwpewebkit-2.0-dev libwpebackend-fdo-1.0-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        run: |
+          git clone --depth 1 --branch "$FLUTTER_VERSION" \
+            https://github.com/flutter/flutter.git /opt/flutter
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Generate SBOM
+        run: |
+          flutter config --no-analytics
+          flutter pub get
+          # Reproducible timestamp: the date of the tagged commit.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" \
+            python3 scripts/sbom.py \
+            -o "UTD-${{ needs.prepare.outputs.version }}-sbom.cdx.json"
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: UTD-*-sbom.cdx.json
+          if-no-files-found: error
+
+  # ── GitHub Release ───────────────────────────────────────────────────────────
+  publish:
+    needs: [prepare, build-macos, build-linux, build-flatpak, build-windows, sbom]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: UTD ${{ needs.prepare.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          body_path: artifacts/release-notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            artifacts/*.dmg
+            artifacts/*.zip
+            artifacts/*.exe
+            artifacts/*.deb
+            artifacts/*.tar.gz
+            artifacts/*.flatpak
+            artifacts/*.cdx.json
+          fail_on_unmatched_files: true
