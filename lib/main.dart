@@ -75,6 +75,9 @@ class _UTrackAppState extends State<UTrackApp> {
         case 'openUrl':
           // From a duplicate copy launched by a click on a notification.
           _openUrl(call.arguments as String);
+        case 'unfocus':
+          // The macOS web view was clicked: Flutter must release the keyboard.
+          FocusManager.instance.primaryFocus?.unfocus();
       }
     });
     if (Platform.isWindows) {

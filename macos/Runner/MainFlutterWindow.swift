@@ -32,6 +32,7 @@ class MainFlutterWindow: NSWindow {
       }
     }
     WebViewContextMenu.install(channel: channel)
+    WebViewMouseDown.install(channel: channel)
     AppMenu.install(channel: channel)
     if SingleInstance.running != nil {
       SingleInstance.handOff(window: self)
@@ -287,6 +288,37 @@ final class WebViewContextMenu: NSObject {
 
   @objc private func changeServer() {
     channel?.invokeMethod("changeServer", arguments: nil)
+  }
+}
+
+/// flutter_inappwebview_macos delays the web view's mouse-down events until a
+/// round trip to Dart has cleared Flutter's focus (workaround for its issue
+/// #2380). WebKit then gets the mouse-up first, no click fires and YouTrack's
+/// dropdowns (issue fields, menus) never open. This hands the events straight
+/// to WKWebView and clears Flutter's focus without waiting.
+enum WebViewMouseDown {
+  private typealias Handler = @convention(c) (AnyObject, Selector, NSEvent) -> Void
+
+  static func install(channel: FlutterMethodChannel) {
+    guard let cls = NSClassFromString("flutter_inappwebview_macos.InAppWebView") else { return }
+    let selectors = [
+      #selector(NSResponder.mouseDown(with:)),
+      #selector(NSResponder.rightMouseDown(with:)),
+      #selector(NSResponder.otherMouseDown(with:)),
+    ]
+    for sel in selectors {
+      let webKitImp = class_getMethodImplementation(WKWebView.self, sel)
+      // Only replace the plugin's own overrides, never WKWebView's.
+      guard let method = class_getInstanceMethod(cls, sel), let webKitImp,
+        method_getImplementation(method) != webKitImp
+      else { continue }
+      let webKitHandler = unsafeBitCast(webKitImp, to: Handler.self)
+      let block: @convention(block) (AnyObject, NSEvent) -> Void = { view, event in
+        channel.invokeMethod("unfocus", arguments: nil)
+        webKitHandler(view, sel, event)
+      }
+      method_setImplementation(method, imp_implementationWithBlock(block))
+    }
   }
 }
 
