@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Romain Pelletant
+# SPDX-License-Identifier: Apache-2.0
 """Generates a CycloneDX 1.6 SBOM (JSON) of UTD and all its dependencies.
 
 Components:

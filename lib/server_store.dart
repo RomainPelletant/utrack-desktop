@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Romain Pelletant
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists the YouTrack server URL between launches.

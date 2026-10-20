@@ -87,7 +87,7 @@ One universal release. (Intel-based and Apple silicon)
 Two Linux releases are provided:
 
 - Binaries only
-- Flatpak with dependencies (Recommanded to include WPE Webkit > 2.5)
+- Flatpak with dependencies (Recommended to include WPE Webkit > 2.5)
 
 ARM64 and AMD64 platforms are supported.
 

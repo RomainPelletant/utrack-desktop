@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Romain Pelletant
+// SPDX-License-Identifier: Apache-2.0
+
 #include "flutter_window.h"
 
 #include <flutter/standard_method_codec.h>
