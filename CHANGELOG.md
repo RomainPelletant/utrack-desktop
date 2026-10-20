@@ -7,6 +7,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-20
+
 ### Fixed
 
 - macOS: dropdowns in the page (issue fields such as State, Assignee or Priority, menus)
@@ -53,5 +55,6 @@ First release.
   YouTrack Mobile app). JetBrains may change it without notice.
 - On Windows and Linux, closing the window quits the app and stops notifications.
 
-[Unreleased]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/romainpelletant/utrack-desktop/releases/tag/v1.0.0
