@@ -7,6 +7,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Windows: the page no longer stays blank when UTD is installed for all users. The web
+  view now keeps its data in `%LOCALAPPDATA%\UTD\WebView2`; you need to sign in to
+  YouTrack again once.
+
+
 ## [1.0.1] - 2026-10-20
 
 ### Fixed

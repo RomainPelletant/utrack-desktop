@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'l10n/app_localizations.dart';
@@ -21,7 +22,30 @@ Future<void> main() async {
   // A second copy (macOS) hands off to the running one and quits natively.
   if (await _isDuplicateInstance()) return;
   final serverUrl = await ServerStore.load();
-  runApp(UTrackApp(initialServerUrl: serverUrl));
+  final webViewEnvironment = await _createWebViewEnvironment();
+  runApp(
+    UTrackApp(
+      initialServerUrl: serverUrl,
+      webViewEnvironment: webViewEnvironment,
+    ),
+  );
+}
+
+/// Windows: WebView2 keeps its data next to the executable by default, which
+/// is read-only in an all-users install (Program Files) and leaves the web
+/// view blank. It goes to the user's local app data instead.
+Future<WebViewEnvironment?> _createWebViewEnvironment() async {
+  final localAppData = Platform.environment['LOCALAPPDATA'];
+  if (!Platform.isWindows || localAppData == null) return null;
+  try {
+    return await WebViewEnvironment.create(
+      settings: WebViewEnvironmentSettings(
+        userDataFolder: '$localAppData\\UTD\\WebView2',
+      ),
+    );
+  } catch (_) {
+    return null; // Falls back to WebView2's default folder.
+  }
 }
 
 Future<bool> _isDuplicateInstance() async {
@@ -36,9 +60,12 @@ Future<bool> _isDuplicateInstance() async {
 }
 
 class UTrackApp extends StatefulWidget {
-  const UTrackApp({super.key, this.initialServerUrl});
+  const UTrackApp({super.key, this.initialServerUrl, this.webViewEnvironment});
 
   final String? initialServerUrl;
+
+  /// Web view settings shared by the whole app (Windows only).
+  final WebViewEnvironment? webViewEnvironment;
 
   @override
   State<UTrackApp> createState() => _UTrackAppState();
@@ -235,6 +262,7 @@ class _UTrackAppState extends State<UTrackApp> {
               // A new key rebuilds the web view when the server changes.
               key: ValueKey(serverUrl),
               serverUrl: serverUrl,
+              webViewEnvironment: widget.webViewEnvironment,
               openRequests: _openRequests.stream,
               onChangeServer: _changeServer,
               onNotificationSettings: _showNotificationSettings,
