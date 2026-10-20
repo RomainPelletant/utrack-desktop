@@ -16,6 +16,7 @@ class YouTrackScreen extends StatefulWidget {
   const YouTrackScreen({
     super.key,
     required this.serverUrl,
+    this.webViewEnvironment,
     required this.openRequests,
     required this.onChangeServer,
     required this.onNotificationSettings,
@@ -23,6 +24,9 @@ class YouTrackScreen extends StatefulWidget {
   });
 
   final String serverUrl;
+
+  /// WebView2 settings (Windows), e.g. its user data folder.
+  final WebViewEnvironment? webViewEnvironment;
 
   /// URLs to load, e.g. the issue of a clicked notification.
   final Stream<String> openRequests;
@@ -107,6 +111,7 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
       body: Stack(
         children: [
           InAppWebView(
+            webViewEnvironment: widget.webViewEnvironment,
             initialUrlRequest: URLRequest(url: WebUri(widget.serverUrl)),
             contextMenu: _contextMenu(AppLocalizations.of(context)),
             initialSettings: InAppWebViewSettings(
