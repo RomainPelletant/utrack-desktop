@@ -7,12 +7,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-20
+
 ### Fixed
 
 - Windows: the page no longer stays blank when UTD is installed for all users. The web
   view now keeps its data in `%LOCALAPPDATA%\UTD\WebView2`; you need to sign in to
   YouTrack again once.
-
 
 ## [1.0.1] - 2026-10-20
 
@@ -62,6 +63,7 @@ First release.
   YouTrack Mobile app). JetBrains may change it without notice.
 - On Windows and Linux, closing the window quits the app and stops notifications.
 
-[Unreleased]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/romainpelletant/utrack-desktop/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/romainpelletant/utrack-desktop/releases/tag/v1.0.0
