@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Romain Pelletant
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

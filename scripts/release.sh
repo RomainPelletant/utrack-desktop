@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2026 Romain Pelletant
+# SPDX-License-Identifier: Apache-2.0
 # Builds and packages UTD. Used by .github/workflows/release.yml and locally.
 #
 # Usage:

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Romain Pelletant
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Stores one YouTrack permanent token per server in the OS keychain.

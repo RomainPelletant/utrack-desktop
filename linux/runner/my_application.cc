@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Romain Pelletant
+// SPDX-License-Identifier: Apache-2.0
+
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
