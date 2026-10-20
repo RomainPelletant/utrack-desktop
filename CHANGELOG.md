@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- macOS: dropdowns in the page (issue fields such as State, Assignee or Priority, menus)
+  now open on click.
+
 ## [1.0.0] - 2026-10-18
 
 First release.
