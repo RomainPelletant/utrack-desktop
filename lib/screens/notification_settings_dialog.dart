@@ -119,6 +119,20 @@ class _NotificationSettingsDialogState
                 onOpenSystemSettings: widget.onOpenSystemSettings,
               ),
             ),
+            ValueListenableBuilder(
+              valueListenable: TokenStore.keychainUnavailable,
+              builder: (context, unavailable, _) => unavailable
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _StatusView.line(
+                        theme,
+                        Icons.key_off_outlined,
+                        theme.colorScheme.error,
+                        l10n.statusKeychainUnavailable,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _controller,
@@ -230,9 +244,9 @@ class _StatusView extends StatelessWidget {
     };
 
     final lines = <Widget>[
-      if (text.isNotEmpty) _line(theme, icon, color, text),
+      if (text.isNotEmpty) line(theme, icon, color, text),
       if (status.permissionDenied) ...[
-        _line(
+        line(
           theme,
           Icons.notifications_off_outlined,
           colors.error,
@@ -258,7 +272,7 @@ class _StatusView extends StatelessWidget {
     );
   }
 
-  Widget _line(ThemeData theme, IconData icon, Color color, String text) {
+  static Widget line(ThemeData theme, IconData icon, Color color, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(

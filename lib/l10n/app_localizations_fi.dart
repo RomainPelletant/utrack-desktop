@@ -91,6 +91,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'Tallennettua tunnusta ei voitu lukea järjestelmän avainnipusta. Anna se uudelleen ja tallenna.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Salasanapalvelua (GNOME Keyring, KWallet) ei ole saatavilla tai sen lukitusta ei ole avattu: UTD säilyttää tunnuksen vain sulkemiseen asti.';
+
+  @override
   String statusError(String error) {
     return 'Viimeisin tarkistus epäonnistui: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Avaa järjestelmäasetukset';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime puuttuu';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD tarvitsee sitä YouTrackin näyttämiseen. Asenna se ja käynnistä UTD sitten uudelleen.';
+
+  @override
+  String get downloadWebView => 'Lataa WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Sivua ei voi näyttää';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Verkkonäkymä ei käynnistynyt. Näin voi käydä etätyöpöytäistunnossa, virtuaalikoneessa tai kun tietoturvaohjelmisto estää Microsoft Edge WebView2:n. Tiedot: $log';
+  }
 
   @override
   String get menuChangeServer => 'Vaihda palvelin…';

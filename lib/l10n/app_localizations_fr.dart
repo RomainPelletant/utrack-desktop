@@ -91,6 +91,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le jeton enregistré n\'a pas pu être lu dans le trousseau du système. Saisissez-le à nouveau et enregistrez.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Aucun service de mots de passe (GNOME Keyring, KWallet) n\'est disponible ou déverrouillé : UTD garde le jeton seulement jusqu\'à sa fermeture.';
+
+  @override
   String statusError(String error) {
     return 'La dernière vérification a échoué : $error';
   }
@@ -101,6 +105,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Ouvrir les réglages du système';
+
+  @override
+  String get webViewMissingTitle =>
+      'Microsoft Edge WebView2 Runtime est manquant';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD en a besoin pour afficher YouTrack. Installez-le, puis redémarrez UTD.';
+
+  @override
+  String get downloadWebView => 'Télécharger WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Impossible d\'afficher la page';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'La vue web n\'a pas démarré. Cela peut arriver dans une session Bureau à distance, dans une machine virtuelle ou lorsqu\'un logiciel de sécurité bloque Microsoft Edge WebView2. Détails : $log';
+  }
 
   @override
   String get menuChangeServer => 'Changer de serveur…';

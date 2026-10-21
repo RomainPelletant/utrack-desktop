@@ -48,6 +48,7 @@
     }
   },
   "statusKeychainError": "The saved token could not be read from the system keychain. Enter it again and save.",
+  "statusKeychainUnavailable": "No password service (GNOME Keyring, KWallet) is available or unlocked: UTD keeps the token only until it quits.",
   "statusError": "Last check failed: {error}",
   "@statusError": {
     "placeholders": {
@@ -58,6 +59,18 @@
   },
   "statusPermissionDenied": "The system blocks notifications from UTD. Allow them in the system settings.",
   "openSystemSettings": "Open system settings",
+  "webViewMissingTitle": "Microsoft Edge WebView2 Runtime is missing",
+  "webViewMissingHelp": "UTD needs it to display YouTrack. Install it, then restart UTD.",
+  "downloadWebView": "Download WebView2 Runtime",
+  "webViewFailedTitle": "The page cannot be displayed",
+  "webViewFailedHelp": "The web view did not start. This can happen in a Remote Desktop session, in a virtual machine, or when security software blocks Microsoft Edge WebView2. Details: {log}",
+  "@webViewFailedHelp": {
+    "placeholders": {
+      "log": {
+        "type": "String"
+      }
+    }
+  },
   "menuChangeServer": "Change Server…",
   "menuNotifications": "Notifications…",
   "menuAbout": "About {app}",

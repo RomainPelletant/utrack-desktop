@@ -91,6 +91,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível ler o token salvo nas chaves do sistema. Digite-o novamente e salve.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Nenhum serviço de senhas (GNOME Keyring, KWallet) está disponível ou desbloqueado: o UTD guarda o token apenas até ser fechado.';
+
+  @override
   String statusError(String error) {
     return 'A última verificação falhou: $error';
   }
@@ -101,6 +105,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Abrir ajustes do sistema';
+
+  @override
+  String get webViewMissingTitle =>
+      'O Microsoft Edge WebView2 Runtime não está instalado';
+
+  @override
+  String get webViewMissingHelp =>
+      'O UTD precisa dele para exibir o YouTrack. Instale-o e reinicie o UTD.';
+
+  @override
+  String get downloadWebView => 'Baixar o WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Não é possível exibir a página';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'A visualização web não foi iniciada. Isso pode acontecer em uma sessão de Área de Trabalho Remota, em uma máquina virtual ou quando um software de segurança bloqueia o Microsoft Edge WebView2. Detalhes: $log';
+  }
 
   @override
   String get menuChangeServer => 'Mudar de Servidor…';
@@ -201,6 +224,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
       'Não foi possível ler o token guardado no porta-chaves do sistema. Introduza-o novamente e guarde.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Nenhum serviço de palavras-passe (GNOME Keyring, KWallet) está disponível ou desbloqueado: o UTD guarda o token apenas até ser fechado.';
+
+  @override
   String statusError(String error) {
     return 'A última verificação falhou: $error';
   }
@@ -211,6 +238,25 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get openSystemSettings => 'Abrir definições do sistema';
+
+  @override
+  String get webViewMissingTitle =>
+      'O Microsoft Edge WebView2 Runtime não está instalado';
+
+  @override
+  String get webViewMissingHelp =>
+      'O UTD precisa dele para mostrar o YouTrack. Instale-o e reinicie o UTD.';
+
+  @override
+  String get downloadWebView => 'Transferir o WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Não é possível mostrar a página';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'A vista web não foi iniciada. Isto pode acontecer numa sessão de Ambiente de Trabalho Remoto, numa máquina virtual ou quando um software de segurança bloqueia o Microsoft Edge WebView2. Detalhes: $log';
+  }
 
   @override
   String get menuChangeServer => 'Mudar de servidor…';

@@ -91,6 +91,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'A mentett tokent nem sikerült kiolvasni a rendszer kulcskarikájából. Adja meg újra, és mentse.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Nincs elérhető vagy feloldott jelszószolgáltatás (GNOME Keyring, KWallet): az UTD csak a bezárásáig őrzi meg a tokent.';
+
+  @override
   String statusError(String error) {
     return 'Az utolsó ellenőrzés sikertelen: $error';
   }
@@ -101,6 +105,25 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Rendszerbeállítások megnyitása';
+
+  @override
+  String get webViewMissingTitle =>
+      'A Microsoft Edge WebView2 Runtime hiányzik';
+
+  @override
+  String get webViewMissingHelp =>
+      'Az UTD-nek erre van szüksége a YouTrack megjelenítéséhez. Telepítse, majd indítsa újra az UTD-t.';
+
+  @override
+  String get downloadWebView => 'WebView2 Runtime letöltése';
+
+  @override
+  String get webViewFailedTitle => 'Az oldal nem jeleníthető meg';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'A webes nézet nem indult el. Ez előfordulhat távoli asztali munkamenetben, virtuális gépen, vagy ha egy biztonsági szoftver letiltja a Microsoft Edge WebView2-t. Részletek: $log';
+  }
 
   @override
   String get menuChangeServer => 'Szerver módosítása…';

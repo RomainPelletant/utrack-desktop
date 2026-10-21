@@ -164,6 +164,9 @@ class NotificationService {
       token = await TokenStore.load(serverUrl);
     } on PlatformException catch (e) {
       debugPrint('Notifications: keychain: $e');
+      // No Secret Service on Linux: nothing was stored, and the settings
+      // dialog explains it.
+      if (TokenStore.keychainUnavailable.value) return;
       status.value = NotificationStatus(
         NotificationState.keychainError,
         error: e.message ?? e.code,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:utrack_desktop/l10n/app_localizations.dart';
 import 'package:utrack_desktop/notifications/notification_service.dart';
+import 'package:utrack_desktop/notifications/token_store.dart';
 import 'package:utrack_desktop/screens/notification_settings_dialog.dart';
 
 void main() {
@@ -53,6 +54,18 @@ void main() {
     status.value = const NotificationStatus(NotificationState.keychainError);
     await tester.pump();
     expect(find.text(l10n.statusKeychainError), findsOneWidget);
+  });
+
+  testWidgets('warns when the token is kept for the session only', (
+    tester,
+  ) async {
+    addTearDown(TokenStore.reset);
+    final l10n = await pumpDialog(tester);
+    expect(find.text(l10n.statusKeychainUnavailable), findsNothing);
+
+    TokenStore.keychainUnavailable.value = true;
+    await tester.pump();
+    expect(find.text(l10n.statusKeychainUnavailable), findsOneWidget);
   });
 
   testWidgets('shows check errors and rejected tokens', (tester) async {

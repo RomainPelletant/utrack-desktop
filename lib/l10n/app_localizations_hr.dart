@@ -91,6 +91,10 @@ class AppLocalizationsHr extends AppLocalizations {
       'Spremljeni token nije moguće pročitati iz privjeska ključeva sustava. Unesite ga ponovno i spremite.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Nijedna usluga lozinki (GNOME Keyring, KWallet) nije dostupna ni otključana: UTD čuva token samo do zatvaranja.';
+
+  @override
   String statusError(String error) {
     return 'Posljednja provjera nije uspjela: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsHr extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Otvori postavke sustava';
+
+  @override
+  String get webViewMissingTitle => 'Nedostaje Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD ga treba za prikaz YouTracka. Instalirajte ga, a zatim ponovno pokrenite UTD.';
+
+  @override
+  String get downloadWebView => 'Preuzmi WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Stranicu nije moguće prikazati';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Web-prikaz se nije pokrenuo. To se može dogoditi u sesiji udaljene radne površine, na virtualnom računalu ili kada sigurnosni softver blokira Microsoft Edge WebView2. Pojedinosti: $log';
+  }
 
   @override
   String get menuChangeServer => 'Promijeni poslužitelj…';

@@ -91,6 +91,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'לא ניתן היה לקרוא את האסימון השמור ממחזיק המפתחות של המערכת. הזינו אותו שוב ושמרו.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'אין שירות סיסמאות (GNOME Keyring, KWallet) זמין או פתוח: UTD שומר את האסימון רק עד לסגירתו.';
+
+  @override
   String statusError(String error) {
     return 'הבדיקה האחרונה נכשלה: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'פתיחת הגדרות המערכת';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime חסר';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD זקוק לו כדי להציג את YouTrack. התקינו אותו ולאחר מכן הפעילו מחדש את UTD.';
+
+  @override
+  String get downloadWebView => 'הורדת WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'לא ניתן להציג את הדף';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'תצוגת האינטרנט לא הופעלה. זה יכול לקרות בהפעלת שולחן עבודה מרוחק, במכונה וירטואלית או כאשר תוכנת אבטחה חוסמת את Microsoft Edge WebView2. פרטים: $log';
+  }
 
   @override
   String get menuChangeServer => 'החלפת שרת…';

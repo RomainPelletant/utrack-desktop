@@ -91,6 +91,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Nie udało się odczytać zapisanego tokenu z pęku kluczy systemu. Wpisz go ponownie i zapisz.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Brak dostępnej lub odblokowanej usługi haseł (GNOME Keyring, KWallet): UTD przechowuje token tylko do zamknięcia aplikacji.';
+
+  @override
   String statusError(String error) {
     return 'Ostatnie sprawdzenie nie powiodło się: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Otwórz ustawienia systemu';
+
+  @override
+  String get webViewMissingTitle => 'Brak Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD potrzebuje go do wyświetlania YouTrack. Zainstaluj go, a następnie uruchom ponownie UTD.';
+
+  @override
+  String get downloadWebView => 'Pobierz WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Nie można wyświetlić strony';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Widok sieci Web nie uruchomił się. Może się to zdarzyć w sesji Pulpitu zdalnego, na maszynie wirtualnej lub gdy oprogramowanie zabezpieczające blokuje Microsoft Edge WebView2. Szczegóły: $log';
+  }
 
   @override
   String get menuChangeServer => 'Zmień serwer…';

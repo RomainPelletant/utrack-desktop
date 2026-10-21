@@ -91,6 +91,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذرت قراءة الرمز المميز المحفوظ من سلسلة مفاتيح النظام. أدخله مرة أخرى واحفظه.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'لا تتوفر خدمة كلمات مرور (GNOME Keyring أو KWallet) أو أنها مقفلة: يحتفظ UTD بالرمز المميز حتى إغلاقه فقط.';
+
+  @override
   String statusError(String error) {
     return 'فشل آخر تحقق: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'فتح إعدادات النظام';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime غير مثبت';
+
+  @override
+  String get webViewMissingHelp =>
+      'يحتاج UTD إليه لعرض YouTrack. ثبّته ثم أعد تشغيل UTD.';
+
+  @override
+  String get downloadWebView => 'تنزيل WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'تعذر عرض الصفحة';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'لم يبدأ عرض الويب. قد يحدث ذلك في جلسة سطح المكتب البعيد أو في جهاز ظاهري أو عندما يحظر برنامج أمان Microsoft Edge WebView2. التفاصيل: $log';
+  }
 
   @override
   String get menuChangeServer => 'تغيير الخادم…';

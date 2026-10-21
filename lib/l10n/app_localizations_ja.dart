@@ -91,6 +91,10 @@ class AppLocalizationsJa extends AppLocalizations {
       '保存されたトークンをシステムのキーチェーンから読み込めませんでした。もう一度入力して保存してください。';
 
   @override
+  String get statusKeychainUnavailable =>
+      '利用可能な、またはロック解除されたパスワードサービス (GNOME Keyring、KWallet) がありません。UTD は終了するまでの間だけトークンを保持します。';
+
+  @override
   String statusError(String error) {
     return '前回の確認に失敗しました: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'システム設定を開く';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime がありません';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD が YouTrack を表示するために必要です。インストールしてから UTD を再起動してください。';
+
+  @override
+  String get downloadWebView => 'WebView2 Runtime をダウンロード';
+
+  @override
+  String get webViewFailedTitle => 'ページを表示できません';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Web ビューが起動しませんでした。リモート デスクトップ セッション、仮想マシン、またはセキュリティ ソフトウェアが Microsoft Edge WebView2 をブロックしている場合に発生することがあります。詳細: $log';
+  }
 
   @override
   String get menuChangeServer => 'サーバを変更…';

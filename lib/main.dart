@@ -3,12 +3,14 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'app_log.dart';
 import 'l10n/app_localizations.dart';
 import 'notifications/notification_service.dart';
 import 'screens/notification_settings_dialog.dart';
@@ -21,30 +23,68 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // A second copy (macOS) hands off to the running one and quits natively.
   if (await _isDuplicateInstance()) return;
+  if (Platform.isWindows) await _startLog();
   final serverUrl = await ServerStore.load();
-  final webViewEnvironment = await _createWebViewEnvironment();
+  final webView = await _createWebViewEnvironment();
   runApp(
     UTrackApp(
       initialServerUrl: serverUrl,
-      webViewEnvironment: webViewEnvironment,
+      webViewEnvironment: webView.environment,
+      webViewMissing: webView.missing,
     ),
   );
 }
 
-/// Windows: WebView2 keeps its data next to the executable by default, which
-/// is read-only in an all-users install (Program Files) and leaves the web
-/// view blank. It goes to the user's local app data instead.
-Future<WebViewEnvironment?> _createWebViewEnvironment() async {
-  final localAppData = Platform.environment['LOCALAPPDATA'];
-  if (!Platform.isWindows || localAppData == null) return null;
+/// Windows: records the version and uncaught errors (e.g. a web view the
+/// plugin cannot create) in the log file, as there is no console.
+Future<void> _startLog() async {
+  final info = await PackageInfo.fromPlatform();
+  AppLog.write(
+    'UTD ${info.version} on Windows ${Platform.operatingSystemVersion}',
+  );
+  FlutterError.onError = (details) {
+    AppLog.write('Error: ${details.exceptionAsString()}');
+    FlutterError.presentError(details);
+  };
+  PlatformDispatcher.instance.onError = (error, _) {
+    AppLog.write('Uncaught error: $error');
+    return false; // Keeps the default reporting.
+  };
+}
+
+/// Windows: checks that the WebView2 Runtime is installed ([missing]
+/// otherwise). WebView2 keeps its data next to the executable by default,
+/// which is read-only in an all-users install (Program Files) and leaves the
+/// web view blank: it goes to the user's local app data instead.
+Future<({WebViewEnvironment? environment, bool missing})>
+_createWebViewEnvironment() async {
+  if (!Platform.isWindows) return (environment: null, missing: false);
   try {
-    return await WebViewEnvironment.create(
+    final version = await WebViewEnvironment.getAvailableVersion();
+    if (version == null) {
+      AppLog.write('WebView2 Runtime not found');
+      return (environment: null, missing: true);
+    }
+    AppLog.write('WebView2 Runtime $version');
+  } catch (e) {
+    AppLog.write('WebView2 Runtime version check failed: $e');
+  }
+  final localAppData = Platform.environment['LOCALAPPDATA'];
+  if (localAppData == null) {
+    AppLog.write('LOCALAPPDATA is not set: default WebView2 data folder');
+    return (environment: null, missing: false);
+  }
+  try {
+    final environment = await WebViewEnvironment.create(
       settings: WebViewEnvironmentSettings(
         userDataFolder: '$localAppData\\UTD\\WebView2',
       ),
     );
-  } catch (_) {
-    return null; // Falls back to WebView2's default folder.
+    return (environment: environment, missing: false);
+  } catch (e) {
+    // Falls back to WebView2's default folder.
+    AppLog.write('WebView2 environment creation failed: $e');
+    return (environment: null, missing: false);
   }
 }
 
@@ -60,12 +100,20 @@ Future<bool> _isDuplicateInstance() async {
 }
 
 class UTrackApp extends StatefulWidget {
-  const UTrackApp({super.key, this.initialServerUrl, this.webViewEnvironment});
+  const UTrackApp({
+    super.key,
+    this.initialServerUrl,
+    this.webViewEnvironment,
+    this.webViewMissing = false,
+  });
 
   final String? initialServerUrl;
 
   /// Web view settings shared by the whole app (Windows only).
   final WebViewEnvironment? webViewEnvironment;
+
+  /// Windows: the WebView2 Runtime is not installed.
+  final bool webViewMissing;
 
   @override
   State<UTrackApp> createState() => _UTrackAppState();
@@ -263,6 +311,7 @@ class _UTrackAppState extends State<UTrackApp> {
               key: ValueKey(serverUrl),
               serverUrl: serverUrl,
               webViewEnvironment: widget.webViewEnvironment,
+              webViewMissing: widget.webViewMissing,
               openRequests: _openRequests.stream,
               onChangeServer: _changeServer,
               onNotificationSettings: _showNotificationSettings,

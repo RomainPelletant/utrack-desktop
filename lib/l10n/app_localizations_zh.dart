@@ -89,6 +89,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statusKeychainError => '无法从系统钥匙串读取已保存的令牌。请重新输入并保存。';
 
   @override
+  String get statusKeychainUnavailable =>
+      '没有可用或已解锁的密码服务（GNOME Keyring、KWallet）：UTD 仅在退出前保留令牌。';
+
+  @override
   String statusError(String error) {
     return '上次检查失败：$error';
   }
@@ -98,6 +102,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openSystemSettings => '打开系统设置';
+
+  @override
+  String get webViewMissingTitle => '缺少 Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp => 'UTD 需要它来显示 YouTrack。请安装后重新启动 UTD。';
+
+  @override
+  String get downloadWebView => '下载 WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => '无法显示页面';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return '网页视图未能启动。在远程桌面会话、虚拟机中，或安全软件阻止 Microsoft Edge WebView2 时，可能会出现这种情况。详细信息：$log';
+  }
 
   @override
   String get menuChangeServer => '更改服务器…';
@@ -196,6 +217,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get statusKeychainError => '無法從系統鑰匙圈讀取已儲存的權杖。請重新輸入並儲存。';
 
   @override
+  String get statusKeychainUnavailable =>
+      '沒有可用或已解鎖的密碼服務（GNOME Keyring、KWallet）：UTD 只會保留權杖直到結束。';
+
+  @override
   String statusError(String error) {
     return '上次檢查失敗：$error';
   }
@@ -205,6 +230,23 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get openSystemSettings => '打開系統設定';
+
+  @override
+  String get webViewMissingTitle => '缺少 Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp => 'UTD 需要它來顯示 YouTrack。請安裝後重新啟動 UTD。';
+
+  @override
+  String get downloadWebView => '下載 WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => '無法顯示頁面';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return '網頁檢視未能啟動。在遠端桌面工作階段、虛擬機器中，或安全性軟體封鎖 Microsoft Edge WebView2 時，可能會發生這種情況。詳細資訊：$log';
+  }
 
   @override
   String get menuChangeServer => '更改伺服器…';
