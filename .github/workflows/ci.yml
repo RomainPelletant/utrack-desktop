@@ -69,16 +69,8 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build and package (ad-hoc signature)
-        run: scripts/release.sh macos
-
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UTD-macos
-          path: release/*.dmg
-          if-no-files-found: error
-          retention-days: 7
+      - name: Build
+        run: flutter build macos --release
 
   build-linux:
     needs: lint
@@ -118,18 +110,8 @@ jobs:
           flutter config --no-analytics --enable-linux-desktop
           flutter precache --linux
 
-      - name: Build and package
-        run: scripts/release.sh linux
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UTD-linux-${{ matrix.arch }}
-          path: |
-            release/*.tar.gz
-            release/*.deb
-          if-no-files-found: error
-          retention-days: 7
+      - name: Build
+        run: flutter build linux --release
 
   build-windows:
     needs: lint
@@ -148,13 +130,5 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build and package
-        run: scripts/release.sh windows
-
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UTD-windows-x64
-          path: release/*.zip
-          if-no-files-found: error
-          retention-days: 7
+      - name: Build
+        run: flutter build windows --release
