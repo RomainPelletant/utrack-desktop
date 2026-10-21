@@ -91,6 +91,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không thể đọc token đã lưu từ chuỗi khóa của hệ thống. Hãy nhập lại và lưu.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Không có dịch vụ mật khẩu (GNOME Keyring, KWallet) khả dụng hoặc đã mở khóa: UTD chỉ giữ token cho đến khi đóng.';
+
+  @override
   String statusError(String error) {
     return 'Lần kiểm tra cuối thất bại: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Mở cài đặt hệ thống';
+
+  @override
+  String get webViewMissingTitle => 'Thiếu Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD cần nó để hiển thị YouTrack. Hãy cài đặt rồi khởi động lại UTD.';
+
+  @override
+  String get downloadWebView => 'Tải xuống WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Không thể hiển thị trang';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Chế độ xem web không khởi động. Điều này có thể xảy ra trong phiên Máy tính Từ xa, trong máy ảo hoặc khi phần mềm bảo mật chặn Microsoft Edge WebView2. Chi tiết: $log';
+  }
 
   @override
   String get menuChangeServer => 'Đổi máy chủ…';

@@ -91,6 +91,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Token yang disimpan tidak dapat dibaca dari rantai kunci sistem. Masukkan lagi lalu simpan.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Tidak ada layanan kata sandi (GNOME Keyring, KWallet) yang tersedia atau terbuka: UTD hanya menyimpan token hingga ditutup.';
+
+  @override
   String statusError(String error) {
     return 'Pemeriksaan terakhir gagal: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Buka pengaturan sistem';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime tidak ada';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD memerlukannya untuk menampilkan YouTrack. Instal, lalu mulai ulang UTD.';
+
+  @override
+  String get downloadWebView => 'Unduh WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Halaman tidak dapat ditampilkan';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Tampilan web tidak dimulai. Hal ini dapat terjadi dalam sesi Desktop Jarak Jauh, di mesin virtual, atau saat perangkat lunak keamanan memblokir Microsoft Edge WebView2. Detail: $log';
+  }
 
   @override
   String get menuChangeServer => 'Ganti Server…';

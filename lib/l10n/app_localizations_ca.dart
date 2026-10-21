@@ -92,6 +92,10 @@ class AppLocalizationsCa extends AppLocalizations {
       'No s\'ha pogut llegir el testimoni desat del clauer del sistema. Torna\'l a introduir i desa\'l.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'No hi ha cap servei de contrasenyes (GNOME Keyring, KWallet) disponible o desbloquejat: UTD conserva el testimoni només fins que es tanca.';
+
+  @override
   String statusError(String error) {
     return 'La darrera comprovació ha fallat: $error';
   }
@@ -102,6 +106,24 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Obre la configuració del sistema';
+
+  @override
+  String get webViewMissingTitle => 'Falta Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD el necessita per mostrar YouTrack. Instal·la\'l i reinicia UTD.';
+
+  @override
+  String get downloadWebView => 'Baixa WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'No es pot mostrar la pàgina';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'La vista web no s\'ha iniciat. Pot passar en una sessió d\'Escriptori remot, en una màquina virtual o quan un programari de seguretat bloqueja Microsoft Edge WebView2. Detalls: $log';
+  }
 
   @override
   String get menuChangeServer => 'Canvia de servidor…';

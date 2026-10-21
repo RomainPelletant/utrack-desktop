@@ -93,6 +93,10 @@ class AppLocalizationsEl extends AppLocalizations {
       'Δεν ήταν δυνατή η ανάγνωση του αποθηκευμένου διακριτικού από την κλειδοθήκη του συστήματος. Εισαγάγετέ το ξανά και αποθηκεύστε.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Δεν υπάρχει διαθέσιμη ή ξεκλείδωτη υπηρεσία κωδικών πρόσβασης (GNOME Keyring, KWallet): το UTD κρατά το διακριτικό μόνο μέχρι να κλείσει.';
+
+  @override
   String statusError(String error) {
     return 'Ο τελευταίος έλεγχος απέτυχε: $error';
   }
@@ -103,6 +107,24 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Άνοιγμα ρυθμίσεων συστήματος';
+
+  @override
+  String get webViewMissingTitle => 'Λείπει το Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'Το UTD το χρειάζεται για να εμφανίσει το YouTrack. Εγκαταστήστε το και επανεκκινήστε το UTD.';
+
+  @override
+  String get downloadWebView => 'Λήψη του WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Δεν είναι δυνατή η εμφάνιση της σελίδας';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Η προβολή web δεν ξεκίνησε. Αυτό μπορεί να συμβεί σε περίοδο λειτουργίας απομακρυσμένης επιφάνειας εργασίας, σε εικονική μηχανή ή όταν λογισμικό ασφαλείας αποκλείει το Microsoft Edge WebView2. Λεπτομέρειες: $log';
+  }
 
   @override
   String get menuChangeServer => 'Αλλαγή διακομιστή…';

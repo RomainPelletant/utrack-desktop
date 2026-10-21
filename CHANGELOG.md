@@ -7,6 +7,23 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Windows: no more blank window without explanation. UTD now says when the Microsoft
+  Edge WebView2 Runtime is missing, with a link to download it, and shows an error with
+  a Retry button when the web view does not start (Remote Desktop, virtual machines,
+  security software blocking WebView2).
+- Linux: notifications now work without a password service (GNOME Keyring, KWallet) or
+  with a locked one. UTD keeps the token until it quits, never in a file, and says so in
+  the notification settings.
+
+### Added
+
+- Windows: a diagnostic log in `%LOCALAPPDATA%\UTD\utd.log` (UTD and WebView2 versions,
+  web view errors) to attach to bug reports. It never contains the token.
+- Nightly builds: every merge to master publishes the `nightly` pre-release on GitHub
+  (macOS, Windows, Linux), to test fixes before they are released.
+
 ## [1.0.2] - 2026-10-20
 
 ### Fixed

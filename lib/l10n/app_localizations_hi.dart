@@ -91,6 +91,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'सहेजा गया टोकन सिस्टम कीचेन से पढ़ा नहीं जा सका। इसे फिर से दर्ज करें और सहेजें।';
 
   @override
+  String get statusKeychainUnavailable =>
+      'कोई पासवर्ड सेवा (GNOME Keyring, KWallet) उपलब्ध या अनलॉक नहीं है: UTD टोकन को केवल बंद होने तक रखता है।';
+
+  @override
   String statusError(String error) {
     return 'अंतिम जाँच विफल रही: $error';
   }
@@ -101,6 +105,25 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'सिस्टम सेटिंग्स खोलें';
+
+  @override
+  String get webViewMissingTitle =>
+      'Microsoft Edge WebView2 Runtime मौजूद नहीं है';
+
+  @override
+  String get webViewMissingHelp =>
+      'YouTrack दिखाने के लिए UTD को इसकी ज़रूरत है। इसे इंस्टॉल करें, फिर UTD को फिर से शुरू करें।';
+
+  @override
+  String get downloadWebView => 'WebView2 Runtime डाउनलोड करें';
+
+  @override
+  String get webViewFailedTitle => 'पेज नहीं दिखाया जा सकता';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'वेब व्यू शुरू नहीं हुआ। ऐसा रिमोट डेस्कटॉप सेशन में, वर्चुअल मशीन में, या जब कोई सुरक्षा सॉफ़्टवेयर Microsoft Edge WebView2 को ब्लॉक करता है, तब हो सकता है। विवरण: $log';
+  }
 
   @override
   String get menuChangeServer => 'सर्वर बदलें…';

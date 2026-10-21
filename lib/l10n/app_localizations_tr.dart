@@ -91,6 +91,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kaydedilen belirteç sistem anahtar zincirinden okunamadı. Yeniden girip kaydedin.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Kullanılabilir veya kilidi açık bir parola hizmeti (GNOME Keyring, KWallet) yok: UTD belirteci yalnızca kapanana kadar saklar.';
+
+  @override
   String statusError(String error) {
     return 'Son kontrol başarısız oldu: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Sistem ayarlarını aç';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime eksik';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD, YouTrack\'i görüntülemek için buna ihtiyaç duyar. Yükleyin ve ardından UTD\'yi yeniden başlatın.';
+
+  @override
+  String get downloadWebView => 'WebView2 Runtime\'ı indir';
+
+  @override
+  String get webViewFailedTitle => 'Sayfa görüntülenemiyor';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Web görünümü başlatılamadı. Bu durum Uzak Masaüstü oturumunda, sanal makinede veya bir güvenlik yazılımı Microsoft Edge WebView2\'yi engellediğinde yaşanabilir. Ayrıntılar: $log';
+  }
 
   @override
   String get menuChangeServer => 'Sunucuyu Değiştir…';

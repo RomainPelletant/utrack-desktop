@@ -306,6 +306,12 @@ abstract class AppLocalizations {
   /// **'The saved token could not be read from the system keychain. Enter it again and save.'**
   String get statusKeychainError;
 
+  /// No description provided for @statusKeychainUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No password service (GNOME Keyring, KWallet) is available or unlocked: UTD keeps the token only until it quits.'**
+  String get statusKeychainUnavailable;
+
   /// No description provided for @statusError.
   ///
   /// In en, this message translates to:
@@ -323,6 +329,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open system settings'**
   String get openSystemSettings;
+
+  /// No description provided for @webViewMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microsoft Edge WebView2 Runtime is missing'**
+  String get webViewMissingTitle;
+
+  /// No description provided for @webViewMissingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'UTD needs it to display YouTrack. Install it, then restart UTD.'**
+  String get webViewMissingHelp;
+
+  /// No description provided for @downloadWebView.
+  ///
+  /// In en, this message translates to:
+  /// **'Download WebView2 Runtime'**
+  String get downloadWebView;
+
+  /// No description provided for @webViewFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The page cannot be displayed'**
+  String get webViewFailedTitle;
+
+  /// No description provided for @webViewFailedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The web view did not start. This can happen in a Remote Desktop session, in a virtual machine, or when security software blocks Microsoft Edge WebView2. Details: {log}'**
+  String webViewFailedHelp(String log);
 
   /// No description provided for @menuChangeServer.
   ///

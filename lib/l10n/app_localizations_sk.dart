@@ -91,6 +91,10 @@ class AppLocalizationsSk extends AppLocalizations {
       'Uložený token sa nepodarilo načítať zo systémovej kľúčenky. Zadajte ho znova a uložte.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Žiadna služba hesiel (GNOME Keyring, KWallet) nie je dostupná ani odomknutá: UTD si token ponechá len do ukončenia.';
+
+  @override
   String statusError(String error) {
     return 'Posledná kontrola zlyhala: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Otvoriť nastavenia systému';
+
+  @override
+  String get webViewMissingTitle => 'Chýba Microsoft Edge WebView2 Runtime';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD ho potrebuje na zobrazenie YouTracku. Nainštalujte ho a potom UTD reštartujte.';
+
+  @override
+  String get downloadWebView => 'Stiahnuť WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Stránku nemožno zobraziť';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Webové zobrazenie sa nespustilo. Môže sa to stať v relácii vzdialenej pracovnej plochy, vo virtuálnom počítači alebo keď bezpečnostný softvér blokuje Microsoft Edge WebView2. Podrobnosti: $log';
+  }
 
   @override
   String get menuChangeServer => 'Zmeniť server…';

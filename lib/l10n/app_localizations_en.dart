@@ -91,6 +91,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The saved token could not be read from the system keychain. Enter it again and save.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'No password service (GNOME Keyring, KWallet) is available or unlocked: UTD keeps the token only until it quits.';
+
+  @override
   String statusError(String error) {
     return 'Last check failed: $error';
   }
@@ -101,6 +105,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Open system settings';
+
+  @override
+  String get webViewMissingTitle =>
+      'Microsoft Edge WebView2 Runtime is missing';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD needs it to display YouTrack. Install it, then restart UTD.';
+
+  @override
+  String get downloadWebView => 'Download WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'The page cannot be displayed';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'The web view did not start. This can happen in a Remote Desktop session, in a virtual machine, or when security software blocks Microsoft Edge WebView2. Details: $log';
+  }
 
   @override
   String get menuChangeServer => 'Change Server…';

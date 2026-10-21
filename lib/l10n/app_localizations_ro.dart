@@ -91,6 +91,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Tokenul salvat nu a putut fi citit din portcheiul sistemului. Introduceți-l din nou și salvați.';
 
   @override
+  String get statusKeychainUnavailable =>
+      'Niciun serviciu de parole (GNOME Keyring, KWallet) nu este disponibil sau deblocat: UTD păstrează tokenul doar până la închidere.';
+
+  @override
   String statusError(String error) {
     return 'Ultima verificare a eșuat: $error';
   }
@@ -101,6 +105,24 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get openSystemSettings => 'Deschideți setările sistemului';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime lipsește';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD are nevoie de el pentru a afișa YouTrack. Instalați-l, apoi reporniți UTD.';
+
+  @override
+  String get downloadWebView => 'Descărcați WebView2 Runtime';
+
+  @override
+  String get webViewFailedTitle => 'Pagina nu poate fi afișată';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return 'Vizualizarea web nu a pornit. Acest lucru se poate întâmpla într-o sesiune Desktop la distanță, într-o mașină virtuală sau când un software de securitate blochează Microsoft Edge WebView2. Detalii: $log';
+  }
 
   @override
   String get menuChangeServer => 'Schimbă serverul…';

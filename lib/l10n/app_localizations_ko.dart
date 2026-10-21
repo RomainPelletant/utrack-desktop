@@ -90,6 +90,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '저장된 토큰을 시스템 키체인에서 읽을 수 없습니다. 다시 입력하고 저장하십시오.';
 
   @override
+  String get statusKeychainUnavailable =>
+      '사용 가능하거나 잠금 해제된 암호 서비스(GNOME Keyring, KWallet)가 없습니다. UTD는 종료될 때까지만 토큰을 보관합니다.';
+
+  @override
   String statusError(String error) {
     return '마지막 확인 실패: $error';
   }
@@ -100,6 +104,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get openSystemSettings => '시스템 설정 열기';
+
+  @override
+  String get webViewMissingTitle => 'Microsoft Edge WebView2 Runtime이 없습니다';
+
+  @override
+  String get webViewMissingHelp =>
+      'UTD가 YouTrack을 표시하려면 필요합니다. 설치한 후 UTD를 다시 시작하십시오.';
+
+  @override
+  String get downloadWebView => 'WebView2 Runtime 다운로드';
+
+  @override
+  String get webViewFailedTitle => '페이지를 표시할 수 없음';
+
+  @override
+  String webViewFailedHelp(String log) {
+    return '웹 보기가 시작되지 않았습니다. 원격 데스크톱 세션, 가상 머신에서 또는 보안 소프트웨어가 Microsoft Edge WebView2를 차단할 때 발생할 수 있습니다. 세부 정보: $log';
+  }
 
   @override
   String get menuChangeServer => '서버 변경…';
