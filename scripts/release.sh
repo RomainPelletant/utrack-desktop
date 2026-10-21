@@ -19,6 +19,8 @@
 #   APPLE_APP_PASSWORD   App-specific password of APPLE_ACCOUNT_ID
 #
 # Set SKIP_BUILD=1 to package an existing `flutter build` output.
+# Set UTD_VERSION to override the pubspec.yaml version in the app, file names
+# and packages (e.g. 1.0.2-nightly.42.abc1234 for nightly builds).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -27,7 +29,9 @@ APP_NAME="UTD"
 PACKAGE_NAME="utrack-desktop"   # Debian package
 LINUX_BINARY="utd"              # linux/CMakeLists.txt BINARY_NAME
 LINUX_APP_ID="io.github.romainpelletant.utrack_desktop"   # linux/CMakeLists.txt APPLICATION_ID
-VERSION="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)"
+PUBSPEC_VERSION="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)"
+# UTD_VERSION overrides the version in the app and packages (nightly builds).
+VERSION="${UTD_VERSION:-$PUBSPEC_VERSION}"
 OUTPUT_DIR="release"
 
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
@@ -42,8 +46,12 @@ build() {
   if [ "${SKIP_BUILD:-0}" = "1" ]; then
     warn "SKIP_BUILD=1: packaging the existing build"
   else
-    step "[$1] flutter build $1 --release"
-    flutter build "$1" --release
+    # UTD_VERSION is also the app version (macOS About panel, Windows .exe
+    # properties). The build number stays the pubspec.yaml one.
+    local args=(--release)
+    [ -n "${UTD_VERSION:-}" ] && args+=(--build-name "$UTD_VERSION")
+    step "[$1] flutter build $1 ${args[*]}"
+    flutter build "$1" "${args[@]}"
   fi
 }
 
@@ -76,6 +84,13 @@ release_macos() {
   build macos
   [ -d "$app" ] || err "Missing $app"
   lipo -info "$app/Contents/MacOS/$APP_NAME" >&2
+
+  # Flutter strips everything but digits and dots from the macOS build name
+  # (1.0.2-nightly.42 → 1.0.2.42): set the full version before signing.
+  if [ -n "${UTD_VERSION:-}" ]; then
+    plutil -replace CFBundleShortVersionString -string "$UTD_VERSION" \
+      "$app/Contents/Info.plist"
+  fi
 
   # Sign inside-out: nested code first, then the app with its entitlements
   # (sandbox, network, files). `codesign --deep` would drop the entitlements.
@@ -284,9 +299,9 @@ case "${1:-}" in
     "release_$1"
     ;;
   notes)   release_notes "${2:-}" ;;
-  version) echo "$VERSION" ;;
+  version) echo "$PUBSPEC_VERSION" ;;
   *)
-    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'
     exit 1
     ;;
 esac
