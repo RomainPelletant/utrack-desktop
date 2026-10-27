@@ -44,6 +44,10 @@ CloseApplications=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
+[CustomMessages]
+english.DiagnosticShortcut=UTD (diagnostic)
+french.DiagnosticShortcut=UTD (diagnostic)
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
@@ -56,6 +60,8 @@ Type: filesandordirs; Name: "{app}\data"
 
 [Icons]
 Name: "{autoprograms}\UTD"; Filename: "{app}\UTD.exe"
+; Logs every startup step to utd-diagnostic.log, for bug reports.
+Name: "{autoprograms}\{cm:DiagnosticShortcut}"; Filename: "{app}\UTD.exe"; Parameters: "--diagnostic"
 Name: "{autodesktop}\UTD"; Filename: "{app}\UTD.exe"; Tasks: desktopicon
 
 [Run]

@@ -5,6 +5,7 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include "diagnostic.h"
 #include "flutter_window.h"
 #include "utils.h"
 
@@ -39,6 +40,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
+  // `UTD.exe --diagnostic`: logs every step to utd-diagnostic.log.
+  diagnostic::Start();
+
   // WebView2 renders in software: its GPU process fails in Remote Desktop
   // sessions, virtual machines and with some drivers, leaving the page blank.
   // Read by the WebView2 loader when the environment is created; a value set
@@ -51,7 +55,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
-  ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  HRESULT com = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  diagnostic::Log("COM initialized (0x%08lX)", com);
 
   flutter::DartProject project(L"data");
   // Skia instead of Impeller (the default on Windows in Flutter 3.47): when the GPU
@@ -64,14 +69,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       GetCommandLineArguments();
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
+  diagnostic::Log("Flutter project ready (Skia renderer)");
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"UTD", origin, size)) {
+    diagnostic::Log("Window creation failed");
+    diagnostic::Finish(EXIT_FAILURE);
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
+  diagnostic::Log("Window created, message loop started");
 
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {
@@ -79,6 +88,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
+  diagnostic::Finish(EXIT_SUCCESS);
   ::CoUninitialize();
   return EXIT_SUCCESS;
 }

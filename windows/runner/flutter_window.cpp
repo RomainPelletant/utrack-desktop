@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 
+#include "diagnostic.h"
 #include "flutter/generated_plugin_registrant.h"
 
 namespace {
@@ -51,6 +52,8 @@ bool FlutterWindow::OnCreate() {
   }
 
   RECT frame = GetClientArea();
+  diagnostic::Log("Starting the Flutter engine (%ldx%ld)",
+                  frame.right - frame.left, frame.bottom - frame.top);
 
   // The size here must match the window dimensions to avoid unnecessary surface
   // creation / destruction in the startup path.
@@ -58,9 +61,13 @@ bool FlutterWindow::OnCreate() {
       frame.right - frame.left, frame.bottom - frame.top, project_);
   // Ensure that basic setup of the controller was successful.
   if (!flutter_controller_->engine() || !flutter_controller_->view()) {
+    diagnostic::Log("Flutter engine failed to start (engine: %s, view: %s)",
+                    flutter_controller_->engine() ? "ok" : "none",
+                    flutter_controller_->view() ? "ok" : "none");
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  diagnostic::Log("Flutter engine started, plugins registered");
 
   app_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "utd/app",
@@ -72,6 +79,8 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
+    diagnostic::MarkFirstFrame();
+    diagnostic::Log("First Flutter frame, window shown");
     this->Show();
   });
 
@@ -126,6 +135,7 @@ void FlutterWindow::SetSystemMenuLabels(const flutter::EncodableMap& labels) {
 }
 
 void FlutterWindow::OnDestroy() {
+  diagnostic::Log("Window closed");
   app_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;

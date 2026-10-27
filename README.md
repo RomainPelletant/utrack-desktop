@@ -116,6 +116,21 @@ flatpak install <UTD_release>.flatpak
 
 Launch installer <UTD_release>-setup.exe
 
+# Diagnostic mode
+
+If UTD does not start or stays blank, start it in diagnostic mode: it logs every
+step of its startup to `utd-diagnostic.log`, then shows this file when you quit.
+Attach it to your [bug report](https://github.com/romainpelletant/utrack-desktop/issues).
+It never contains your token or page contents.
+
+| Platform | Start                                                    | Log file                                                                        |
+| -------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Windows  | Start menu → **UTD (diagnostic)**, or `UTD.exe --diagnostic` | `%LOCALAPPDATA%\UTD\utd-diagnostic.log`                                        |
+| macOS    | `open -a UTD --args --diagnostic`                        | `~/Library/Containers/io.github.romainpelletant.utrack-desktop/Data/Library/Logs/UTD/utd-diagnostic.log` |
+| Linux    | `utd --diagnostic` (Flatpak: `flatpak run io.github.romainpelletant.utrack_desktop --diagnostic`) | `~/.local/state/utd/utd-diagnostic.log` (Flatpak: `~/.var/app/io.github.romainpelletant.utrack_desktop/.local/state/utd/`) |
+
+Close UTD first if it is running. Setting `UTD_DIAGNOSTIC=1` works too.
+
 # SBOM
 
 Vulnerability scan is launched every monday on master branch.
