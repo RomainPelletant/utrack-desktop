@@ -4,11 +4,11 @@
 #include "diagnostic.h"
 
 #include <dxgi.h>
-#include <io.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <windows.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -22,6 +22,10 @@ namespace {
 
 // A blank window past this delay means Flutter could not render.
 constexpr auto kFirstFrameTimeout = std::chrono::seconds(15);
+
+// Shared with the C runtime streams and Dart, which open the same file.
+constexpr DWORD kShareAll =
+    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
 bool g_enabled = false;
 std::wstring g_path;
@@ -145,29 +149,14 @@ void Start() {
   ::CreateDirectoryW(dir.c_str(), nullptr);  // Fails when it already exists.
   g_path = dir + L"\\utd-diagnostic.log";
 
-  // A new log at each launch. Both streams then append, so that they do not
-  // overwrite each other (nor the Dart log, written to the same file).
-  FILE* file;
-  if (_wfopen_s(&file, g_path.c_str(), L"w") != 0) {
+  // A new log at each launch.
+  HANDLE file = ::CreateFileW(g_path.c_str(), GENERIC_WRITE, kShareAll,
+                              nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                              nullptr);
+  if (file == INVALID_HANDLE_VALUE) {
     return;
   }
-  fclose(file);
-  // Output of the runner and plugins. flutter_windows.dll has its own C
-  // runtime: the engine output is not captured, hence the Dart log writing
-  // to the file directly.
-  FILE* unused;
-  if (_wfreopen_s(&unused, g_path.c_str(), L"a", stdout) != 0 ||
-      _wfreopen_s(&unused, g_path.c_str(), L"a", stderr) != 0) {
-    return;
-  }
-  setvbuf(stdout, nullptr, _IONBF, 0);
-  setvbuf(stderr, nullptr, _IONBF, 0);
-  if (_fileno(stdout) != 1) {
-    _dup2(_fileno(stdout), 1);
-  }
-  if (_fileno(stderr) != 2) {
-    _dup2(_fileno(stderr), 2);
-  }
+  ::CloseHandle(file);
   g_enabled = true;
 
   // Read by lib/app_log.dart.
@@ -175,6 +164,20 @@ void Start() {
   ::SetUnhandledExceptionFilter(OnUnhandledException);
 
   Log("UTD diagnostic mode");
+
+  // Output of the runner and plugins, as a bonus: the log does not depend on
+  // it, as a GUI app has no valid standard streams to start with.
+  // flutter_windows.dll has its own C runtime: the engine output is never
+  // captured, hence the Dart log writing to the file directly.
+  FILE* unused;
+  if (_wfreopen_s(&unused, g_path.c_str(), L"a", stdout) == 0 &&
+      _wfreopen_s(&unused, g_path.c_str(), L"a", stderr) == 0) {
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
+  } else {
+    Log("Runner and plugin output not captured");
+  }
+
   LogSystem();
 
   std::thread([] {
@@ -197,9 +200,27 @@ void Log(const char* format, ...) {
   va_end(args);
   SYSTEMTIME time;
   ::GetLocalTime(&time);
-  fprintf(stderr, "%04d-%02d-%02dT%02d:%02d:%02d.%03d [native] %s\n",
-          time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute,
-          time.wSecond, time.wMilliseconds, message);
+  char line[1100];
+  int length = snprintf(line, sizeof(line),
+                        "%04d-%02d-%02dT%02d:%02d:%02d.%03d [native] %s\n",
+                        time.wYear, time.wMonth, time.wDay, time.wHour,
+                        time.wMinute, time.wSecond, time.wMilliseconds, message);
+  if (length <= 0) {
+    return;
+  }
+  // Opened for each line, like the Dart log: FILE_APPEND_DATA writes at the
+  // end even when the C runtime streams or Dart wrote in between.
+  HANDLE file = ::CreateFileW(g_path.c_str(), FILE_APPEND_DATA, kShareAll,
+                              nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                              nullptr);
+  if (file == INVALID_HANDLE_VALUE) {
+    return;
+  }
+  // snprintf returns the untruncated length.
+  size_t size = std::min(static_cast<size_t>(length), sizeof(line) - 1);
+  DWORD written;
+  ::WriteFile(file, line, static_cast<DWORD>(size), &written, nullptr);
+  ::CloseHandle(file);
 }
 
 void MarkFirstFrame() {

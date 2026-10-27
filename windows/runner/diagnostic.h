@@ -6,8 +6,8 @@
 
 // Diagnostic mode, started by `UTD.exe --diagnostic` (the "UTD (diagnostic)"
 // Start menu shortcut) or UTD_DIAGNOSTIC=1. From the very start, native steps,
-// the Flutter engine output (stdout/stderr) and the Dart log (lib/app_log.dart,
-// told the path through UTD_DIAGNOSTIC_LOG) go to
+// the runner and plugin output (stdout/stderr) and the Dart log
+// (lib/app_log.dart, told the path through UTD_DIAGNOSTIC_LOG) go to
 // %LOCALAPPDATA%\UTD\utd-diagnostic.log, for users to attach to bug reports.
 // It must never contain the token or page contents.
 namespace diagnostic {
