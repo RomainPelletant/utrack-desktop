@@ -39,11 +39,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
+  // WebView2 renders in software: its GPU process fails in Remote Desktop
+  // sessions, virtual machines and with some drivers, leaving the page blank.
+  // Read by the WebView2 loader when the environment is created; a value set
+  // by the user wins.
+  if (!::GetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+                                 nullptr, 0)) {
+    ::SetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+                              L"--disable-gpu");
+  }
+
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
+  // Skia instead of Impeller (the default on Windows in Flutter 3.47): when the GPU
+  // cannot be used (Remote Desktop, virtual machines, broken drivers), Skia
+  // falls back to D3D11 WARP then to software rendering, while Impeller has
+  // no software backend and leaves the whole window blank.
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
