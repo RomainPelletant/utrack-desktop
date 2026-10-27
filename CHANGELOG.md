@@ -24,6 +24,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Diagnostic mode, for when UTD does not start or stays blank: start it with
+  `--diagnostic` (Windows: the **UTD (diagnostic)** Start menu shortcut) and it logs every
+  step of its startup (system, graphics card, Flutter engine, web view, errors and
+  crashes) to `utd-diagnostic.log`, then shows this file when you quit. Attach it to your
+  bug report; it never contains the token. Works on Windows, macOS and Linux; see the
+  README.
 - Windows: a diagnostic log in `%LOCALAPPDATA%\UTD\utd.log` (UTD and WebView2 versions,
   web view errors) to attach to bug reports. It never contains the token.
 - Nightly builds: every merge to master publishes the `nightly` pre-release on GitHub

@@ -3,17 +3,21 @@
 
 import Cocoa
 import FlutterMacOS
+import Metal
 import UserNotifications
 import WebKit
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
+    Diagnostic.start()
     let flutterViewController = FlutterViewController()
+    Diagnostic.log("Flutter engine created")
     let windowFrame = self.frame
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    Diagnostic.log("Plugins registered")
 
     let channel = FlutterMethodChannel(
       name: "utd/app",
@@ -44,6 +48,95 @@ class MainFlutterWindow: NSWindow {
     }
 
     super.awakeFromNib()
+  }
+}
+
+/// Diagnostic mode, started by `open -a UTD --args --diagnostic` or
+/// UTD_DIAGNOSTIC=1. From the very start, native steps, the Flutter engine
+/// output (stdout/stderr) and the Dart log (lib/app_log.dart, told the path
+/// through UTD_DIAGNOSTIC_LOG) go to utd-diagnostic.log in the app's Logs
+/// folder (sandbox container), for users to attach to bug reports. It must
+/// never contain the token or page contents.
+enum Diagnostic {
+  /// The log file, or nil outside the diagnostic mode.
+  static let url: URL? = {
+    let value = ProcessInfo.processInfo.environment["UTD_DIAGNOSTIC"] ?? ""
+    let requested =
+      CommandLine.arguments.contains("--diagnostic") || !(value.isEmpty || value == "0")
+    // A duplicate copy quits at once: it must not wipe the running one's log.
+    guard requested, SingleInstance.running == nil else { return nil }
+    return FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?
+      .appendingPathComponent("Logs/UTD/utd-diagnostic.log")
+  }()
+  private static var enabled = false
+
+  private static let timestamp: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+    return formatter
+  }()
+
+  static func start() {
+    guard let url, !enabled else { return }
+    // A new log at each launch. Both streams then append, so that they do not
+    // overwrite each other (nor the Dart log, written to the same file).
+    try? FileManager.default.createDirectory(
+      at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    guard FileManager.default.createFile(atPath: url.path, contents: nil),
+      freopen(url.path, "a", stdout) != nil, freopen(url.path, "a", stderr) != nil
+    else { return }
+    setvbuf(stdout, nil, _IONBF, 0)
+    setvbuf(stderr, nil, _IONBF, 0)
+    enabled = true
+    setenv("UTD_DIAGNOSTIC_LOG", url.path, 1)
+    // Logs the exit and shows users which file to attach to their bug report.
+    NotificationCenter.default.addObserver(
+      forName: NSApplication.willTerminateNotification, object: nil, queue: nil
+    ) { _ in
+      log("Quit")
+      NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+    NSSetUncaughtExceptionHandler { exception in
+      Diagnostic.log(
+        "Uncaught exception: \(exception.name.rawValue) \(exception.reason ?? "")\n"
+          + exception.callStackSymbols.joined(separator: "\n"))
+    }
+
+    let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+    log("UTD \(version) diagnostic mode")
+    log("Executable: \(Bundle.main.bundlePath)")
+    log("macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
+    log("Model: \(model), \(cpu)")
+    log("GPU: \(MTLCreateSystemDefaultDevice()?.name ?? "no Metal device")")
+    for screen in NSScreen.screens {
+      log("Screen: \(Int(screen.frame.width))x\(Int(screen.frame.height)) @\(screen.backingScaleFactor)x")
+    }
+  }
+
+  /// Appends a line to the log; does nothing outside the diagnostic mode.
+  static func log(_ message: String) {
+    guard enabled else { return }
+    fputs("\(timestamp.string(from: Date())) [native] \(message)\n", stderr)
+  }
+
+  private static var model: String {
+    var size = 0
+    guard sysctlbyname("hw.model", nil, &size, nil, 0) == 0, size > 0 else { return "?" }
+    var buffer = [CChar](repeating: 0, count: size)
+    sysctlbyname("hw.model", &buffer, &size, nil, 0)
+    return String(cString: buffer)
+  }
+
+  private static var cpu: String {
+    #if arch(arm64)
+      return "arm64"
+    #else
+      var translated: Int32 = 0
+      var size = MemoryLayout<Int32>.size
+      sysctlbyname("sysctl.proc_translated", &translated, &size, nil, 0)
+      return translated == 1 ? "x86_64 (Rosetta)" : "x86_64"
+    #endif
   }
 }
 

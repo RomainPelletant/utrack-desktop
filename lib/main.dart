@@ -20,12 +20,17 @@ import 'server_store.dart';
 import 'system_l10n.dart';
 
 Future<void> main() async {
+  AppLog.trace('Dart main() started');
   WidgetsFlutterBinding.ensureInitialized();
   // A second copy (macOS) hands off to the running one and quits natively.
   if (await _isDuplicateInstance()) return;
-  if (Platform.isWindows) await _startLog();
+  if (AppLog.path != null) await _startLog();
   final serverUrl = await ServerStore.load();
+  // Not the URL: logs are attached to public bug reports.
+  AppLog.trace('Server configured: ${serverUrl != null}');
   final webView = await _createWebViewEnvironment();
+  if (AppLog.diagnostic) _traceApp();
+  AppLog.trace('runApp()');
   runApp(
     UTrackApp(
       initialServerUrl: serverUrl,
@@ -35,21 +40,44 @@ Future<void> main() async {
   );
 }
 
-/// Windows: records the version and uncaught errors (e.g. a web view the
-/// plugin cannot create) in the log file, as there is no console.
+/// Records the version and uncaught errors (e.g. a web view the plugin
+/// cannot create) in the log file: on Windows, as there is no console, and
+/// everywhere in diagnostic mode.
 Future<void> _startLog() async {
   final info = await PackageInfo.fromPlatform();
   AppLog.write(
-    'UTD ${info.version} on Windows ${Platform.operatingSystemVersion}',
+    'UTD ${info.version} on ${Platform.operatingSystem} '
+    '${Platform.operatingSystemVersion}',
   );
   FlutterError.onError = (details) {
-    AppLog.write('Error: ${details.exceptionAsString()}');
+    AppLog.write('Error: ${details.exceptionAsString()}\n${details.stack}');
     FlutterError.presentError(details);
   };
-  PlatformDispatcher.instance.onError = (error, _) {
-    AppLog.write('Uncaught error: $error');
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppLog.write('Uncaught error: $error\n$stack');
     return false; // Keeps the default reporting.
   };
+}
+
+/// Diagnostic mode: logs the displays, the first frame (or its absence:
+/// blank window) and the app lifecycle.
+void _traceApp() {
+  final dispatcher = PlatformDispatcher.instance;
+  AppLog.trace('Locale: ${dispatcher.locale}');
+  for (final display in dispatcher.displays) {
+    AppLog.trace(
+      'Display ${display.id}: ${display.size.width.round()}x'
+      '${display.size.height.round()} @${display.devicePixelRatio}x, '
+      '${display.refreshRate.round()} Hz',
+    );
+  }
+  WidgetsBinding.instance.waitUntilFirstFrameRasterized.then(
+    (_) => AppLog.trace('First frame rasterized'),
+  );
+  // Registered with the binding, which keeps it for the app's lifetime.
+  AppLifecycleListener(
+    onStateChange: (state) => AppLog.trace('App lifecycle: ${state.name}'),
+  );
 }
 
 /// Windows: checks that the WebView2 Runtime is installed ([missing]
@@ -197,7 +225,7 @@ class _UTrackAppState extends State<UTrackApp> {
       await _notifications.init();
     } catch (e) {
       // The web view stays usable without desktop notifications.
-      debugPrint('Notifications unavailable: $e');
+      AppLog.write('Notifications unavailable: $e');
       return;
     }
     await _notifications.configure(_serverUrl);

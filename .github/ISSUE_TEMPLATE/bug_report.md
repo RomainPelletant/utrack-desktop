@@ -27,5 +27,9 @@ If applicable, add screenshots to help explain your problem.
  - OS: [macOS or Linux or Windows]
  - Version [e.g. 0.9.4]
 
+**Diagnostic log**
+If UTD does not start, stays blank or crashes, start it in diagnostic mode (see the
+README) and attach `utd-diagnostic.log`.
+
 **Additional context**
 Add any other context about the problem here.

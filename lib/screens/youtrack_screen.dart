@@ -192,7 +192,7 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
             // Back/forward/reload are native WKWebView actions wired in the
             // macOS menu bar (MainFlutterWindow.swift).
             onWebViewCreated: (controller) {
-              if (Platform.isWindows) AppLog.write('Web view created');
+              AppLog.write('Web view created');
               _controller = controller;
               final pending = _pendingUrl;
               _pendingUrl = null;
@@ -205,20 +205,25 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
             onProgressChanged: (_, progress) =>
                 setState(() => _progress = progress / 100),
             onLoadStart: (_, _) {
+              AppLog.trace('Page load started'); // Not the URL: private.
               _startWatchdog?.cancel();
               setState(() {
                 _loadError = null;
                 _notStarted = false;
               });
             },
+            onLoadStop: (_, _) => AppLog.trace('Page loaded'),
+            onReceivedHttpError: (_, request, response) {
+              if (request.isForMainFrame ?? true) {
+                AppLog.trace('Page HTTP error ${response.statusCode}');
+              }
+            },
             onReceivedError: (_, request, error) {
               if (request.isForMainFrame ?? true) {
-                if (Platform.isWindows) {
-                  AppLog.write(
-                    'Page load failed: ${error.type.name()} '
-                    '${error.description}',
-                  );
-                }
+                AppLog.write(
+                  'Page load failed: ${error.type.name()} '
+                  '${error.description}',
+                );
                 setState(() => _loadError = error.description);
               }
             },

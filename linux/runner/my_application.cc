@@ -8,6 +8,7 @@
 #include <gdk/gdkx.h>
 #endif
 
+#include "diagnostic.h"
 #include "flutter/generated_plugin_registrant.h"
 
 struct _MyApplication {
@@ -19,6 +20,7 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
+  diagnostic::Log("First Flutter frame, window shown");
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
@@ -27,6 +29,8 @@ static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  diagnostic::Log("Window created (%s)",
+                  G_OBJECT_TYPE_NAME(gtk_widget_get_display(GTK_WIDGET(window))));
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
@@ -72,6 +76,7 @@ static void my_application_activate(GApplication* application) {
       project, self->dart_entrypoint_arguments);
 
   FlView* view = fl_view_new(project);
+  diagnostic::Log("Flutter view created");
   GdkRGBA background_color;
   // Background defaults to black, override it here if necessary, e.g. #00000000
   // for transparent.
@@ -85,8 +90,10 @@ static void my_application_activate(GApplication* application) {
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
   gtk_widget_realize(GTK_WIDGET(view));
+  diagnostic::Log("Flutter view realized");
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+  diagnostic::Log("Plugins registered");
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
