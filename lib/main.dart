@@ -69,6 +69,11 @@ _createWebViewEnvironment() async {
   } catch (e) {
     AppLog.write('WebView2 Runtime version check failed: $e');
   }
+  // Set by the Windows runner (software rendering), unless the user did.
+  AppLog.write(
+    'WebView2 arguments: '
+    '${Platform.environment['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS']}',
+  );
   final localAppData = Platform.environment['LOCALAPPDATA'];
   if (localAppData == null) {
     AppLog.write('LOCALAPPDATA is not set: default WebView2 data folder');

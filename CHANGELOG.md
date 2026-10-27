@@ -13,6 +13,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Edge WebView2 Runtime is missing, with a link to download it, and shows an error with
   a Retry button when the web view does not start (Remote Desktop, virtual machines,
   security software blocking WebView2).
+- Windows: no more blank window for old graphics drivers/platforms, usefull for remote
+  desktop session, virtual machines and with
+  some graphics drivers. The web view renders in software (no GPU; set
+  `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` to override it) and the rest of the window
+  falls back to software rendering when the GPU cannot be used.
 - Linux: notifications now work without a password service (GNOME Keyring, KWallet) or
   with a locked one. UTD keeps the token until it quits, never in a file, and says so in
   the notification settings.
