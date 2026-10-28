@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Security: UTD only opens pages of your YouTrack server when asked by a notification
+  click or another process. Look-alike addresses such as
+  `https://yt.example.com.evil.net` were accepted, and could show a fake login page in
+  the window, which has no address bar.
 - Windows: no more blank window without explanation. UTD now says when the Microsoft
   Edge WebView2 Runtime is missing, with a link to download it, and shows an error with
   a Retry button when the web view does not start (Remote Desktop, virtual machines,

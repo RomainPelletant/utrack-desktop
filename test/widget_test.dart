@@ -33,4 +33,43 @@ void main() {
       expect(ServerStore.normalize('https://'), isNull);
     });
   });
+
+  group('ServerStore.isOnServer', () {
+    const server = 'https://yt.example.com';
+
+    test('accepts pages of the server', () {
+      expect(ServerStore.isOnServer('$server/issue/UTD-1', server), isTrue);
+      expect(ServerStore.isOnServer(server, server), isTrue);
+      expect(ServerStore.isOnServer('HTTPS://YT.example.com/', server), isTrue);
+      expect(
+        ServerStore.isOnServer('https://yt.example.com:443/x', server),
+        isTrue,
+      );
+    });
+
+    test('rejects look-alike hosts and user info', () {
+      for (final url in [
+        'https://yt.example.com.evil.net/login',
+        'https://yt.example.com@evil.net/',
+        'https://evil.net@yt.example.com/',
+        'https://evil.net/?https://yt.example.com',
+        'http://yt.example.com/',
+        'https://yt.example.com:8443/',
+        '//yt.example.com/',
+        'javascript:alert(1)',
+        'not a url',
+      ]) {
+        expect(ServerStore.isOnServer(url, server), isFalse, reason: url);
+      }
+    });
+
+    test('checks the server path on a / boundary', () {
+      const sub = 'http://intranet:8080/youtrack';
+      expect(ServerStore.isOnServer('$sub/issue/X-1', sub), isTrue);
+      expect(ServerStore.isOnServer(sub, sub), isTrue);
+      expect(ServerStore.isOnServer('${sub}evil/', sub), isFalse);
+      expect(ServerStore.isOnServer('http://intranet:8080/', sub), isFalse);
+      expect(ServerStore.isOnServer('http://intranet/youtrack/', sub), isFalse);
+    });
+  });
 }
