@@ -213,7 +213,10 @@ class _UTrackAppState extends State<UTrackApp> {
 
   void _openUrl(String url) {
     final serverUrl = _serverUrl;
-    if (serverUrl == null || !url.startsWith(serverUrl)) return;
+    if (serverUrl == null || !ServerStore.isOnServer(url, serverUrl)) {
+      AppLog.write('Ignored a request to open a page off the server');
+      return;
+    }
     setState(() => _editingServer = false);
     _invokeNative('showWindow');
     // Let the web view screen mount first if the setup screen was shown.

@@ -36,4 +36,28 @@ class ServerStore {
     }
     return result;
   }
+
+  /// Whether [url] is a page of the server at [serverUrl]: same scheme, host
+  /// and port, no user info, and a path under the server's on a `/`
+  /// boundary. A plain prefix check would accept look-alike hosts
+  /// (`https://yt.example.com.evil.net`, `https://yt.example.com@evil.net`),
+  /// and URLs come from other processes (notification clicks, macOS
+  /// distributed notifications): the window has no address bar to tell them
+  /// apart.
+  static bool isOnServer(String url, String serverUrl) {
+    final uri = Uri.tryParse(url);
+    final server = Uri.tryParse(serverUrl);
+    if (uri == null || server == null || !uri.hasScheme) return false;
+    if (uri.scheme != server.scheme ||
+        uri.host.isEmpty ||
+        uri.host != server.host ||
+        uri.port != server.port ||
+        uri.userInfo.isNotEmpty) {
+      return false;
+    }
+    final base = server.path.endsWith('/')
+        ? server.path.substring(0, server.path.length - 1)
+        : server.path;
+    return base.isEmpty || uri.path == base || uri.path.startsWith('$base/');
+  }
 }
