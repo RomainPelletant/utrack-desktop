@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_log.dart';
 import '../l10n/app_localizations.dart';
+import '../server_store.dart';
 
 /// Embeds the YouTrack web app full-window.
 class YouTrackScreen extends StatefulWidget {
@@ -39,6 +40,26 @@ class YouTrackScreen extends StatefulWidget {
   final VoidCallback onNotificationSettings;
   final VoidCallback onAbout;
 
+  /// Link types handed to other apps: e-mail, phone and the JetBrains Toolbox
+  /// (YouTrack's "Open in IDE"). Anything else (file:, smb:, ms-*:,
+  /// search-ms:, other apps' links) is ignored: hostile JavaScript in the page
+  /// could use it to open local files or programs, without the prompt a
+  /// browser shows.
+  static const _appSchemes = {'mailto', 'tel', 'jetbrains'};
+
+  /// Whether [uri] (not a web page) may go to the OS: an [_appSchemes] link
+  /// the user clicked in the page itself, not one a script or an iframe
+  /// opened.
+  @visibleForTesting
+  static bool canOpenAppLink(Uri uri, NavigationAction action) {
+    final clicked =
+        action.navigationType == NavigationType.LINK_ACTIVATED ||
+        action.hasGesture == true;
+    return _appSchemes.contains(uri.scheme.toLowerCase()) &&
+        clicked &&
+        action.isForMainFrame;
+  }
+
   @override
   State<YouTrackScreen> createState() => _YouTrackScreenState();
 }
@@ -60,7 +81,6 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
     'https://developer.microsoft.com/microsoft-edge/webview2/',
   );
 
-  late final _serverHost = Uri.parse(widget.serverUrl).host;
   late final StreamSubscription<String> _openSubscription;
   String? _pendingUrl;
 
@@ -72,6 +92,14 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
     'blob',
     'javascript',
   };
+
+  void _openAppLink(Uri uri, NavigationAction action) {
+    if (YouTrackScreen.canOpenAppLink(uri, action)) {
+      _openExternally(uri);
+    } else {
+      AppLog.write('Ignored a ${uri.scheme}: link');
+    }
+  }
 
   @override
   void initState() {
@@ -229,22 +257,25 @@ class _YouTrackScreenState extends State<YouTrackScreen> {
             },
             shouldOverrideUrlLoading: (_, action) async {
               final uri = action.request.url;
-              // mailto:, tel:, IDE links, etc. go to the OS.
-              if (uri != null && !_webSchemes.contains(uri.scheme)) {
-                _openExternally(uri);
+              // mailto:, tel:, IDE links go to the OS.
+              if (uri != null &&
+                  !_webSchemes.contains(uri.scheme.toLowerCase())) {
+                _openAppLink(uri, action);
                 return NavigationActionPolicy.CANCEL;
               }
               return NavigationActionPolicy.ALLOW;
             },
             onCreateWindow: (controller, action) async {
               // target="_blank" links: stay in-app for YouTrack pages,
-              // open anything else in the default browser.
+              // open other web pages in the default browser.
               final uri = action.request.url;
               if (uri == null) return false;
-              if (uri.host == _serverHost) {
+              if (ServerStore.isOnServer(uri.toString(), widget.serverUrl)) {
                 controller.loadUrl(urlRequest: URLRequest(url: uri));
-              } else {
+              } else if (uri.isScheme('http') || uri.isScheme('https')) {
                 _openExternally(uri);
+              } else {
+                _openAppLink(uri, action);
               }
               return false;
             },

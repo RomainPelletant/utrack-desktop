@@ -13,6 +13,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   click or another process. Look-alike addresses such as
   `https://yt.example.com.evil.net` were accepted, and could show a fake login page in
   the window, which has no address bar.
+- Security: links to other apps only open when you click them in the page, and only
+  e-mail (`mailto:`), phone (`tel:`) and JetBrains Toolbox (`jetbrains:`) links. Others
+  (`file:`, `smb:`, `ms-*:`, `search-ms:`…) are ignored, so a script in the page can no
+  longer open local files or programs.
 - Windows: no more blank window without explanation. UTD now says when the Microsoft
   Edge WebView2 Runtime is missing, with a link to download it, and shows an error with
   a Retry button when the web view does not start (Remote Desktop, virtual machines,
