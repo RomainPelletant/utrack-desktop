@@ -165,19 +165,9 @@ void Start() {
 
   Log("UTD diagnostic mode");
 
-  // Output of the runner and plugins, as a bonus: the log does not depend on
-  // it, as a GUI app has no valid standard streams to start with.
-  // flutter_windows.dll has its own C runtime: the engine output is never
-  // captured, hence the Dart log writing to the file directly.
-  FILE* unused;
-  if (_wfreopen_s(&unused, g_path.c_str(), L"a", stdout) == 0 &&
-      _wfreopen_s(&unused, g_path.c_str(), L"a", stderr) == 0) {
-    setvbuf(stdout, nullptr, _IONBF, 0);
-    setvbuf(stderr, nullptr, _IONBF, 0);
-  } else {
-    Log("Runner and plugin output not captured");
-  }
-
+  // stdout and stderr are not redirected to the log: a GUI app has no valid
+  // standard streams, and reopening them stopped the app right after the first
+  // line on some machines. The Dart log writes to the file directly.
   LogSystem();
 
   std::thread([] {
