@@ -17,6 +17,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   e-mail (`mailto:`), phone (`tel:`) and JetBrains Toolbox (`jetbrains:`) links. Others
   (`file:`, `smb:`, `ms-*:`, `search-ms:`…) are ignored, so a script in the page can no
   longer open local files or programs.
+- Windows: diagnostic mode (`--diagnostic`) no longer stops after the first line of
+  `utd-diagnostic.log`.
 - Windows: no more blank window without explanation. UTD now says when the Microsoft
   Edge WebView2 Runtime is missing, with a link to download it, and shows an error with
   a Retry button when the web view does not start (Remote Desktop, virtual machines,
